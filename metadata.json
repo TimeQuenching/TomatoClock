@@ -1,0 +1,5 @@
+{
+  "name": "TomatoClock",
+  "description": "A minimalist Pomodoro timer with task tracking and persistent archiving.",
+  "requestFramePermissions": []
+}
