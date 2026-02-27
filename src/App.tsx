@@ -136,9 +136,7 @@ export default function App() {
     }
   }, []);
 
-  // 使用更稳健的事件监听
-  const handleMouseEnter = (e: React.MouseEvent) => {
-    // 只有当真正进入了有背景的容器时才关闭穿透
+  const handleMouseEnter = () => {
     if (window.require) {
       const { ipcRenderer } = window.require('electron');
       ipcRenderer.send('set-ignore-mouse-events', false);
@@ -152,27 +150,10 @@ export default function App() {
     }
   };
 
-  // 通用拖拽处理函数
-  const onDragStart = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (
-      target.tagName === 'BUTTON' || 
-      target.tagName === 'INPUT' || 
-      target.closest('button') || 
-      target.closest('svg')
-    ) {
-      return;
-    }
-
-    if (window.require) {
-      const { ipcRenderer } = window.require('electron');
-      // 业界标准方案：调用原生拖拽接口，由 OS 处理位移，零漂移，多屏自适应
-      ipcRenderer.send('window-drag');
-    }
-  };
-
   return (
-    <div className={`h-full w-full bg-transparent flex font-sans select-none overflow-hidden ${isExpanded ? 'items-center justify-center p-10' : 'items-center justify-center p-0'}`}>
+    <div 
+      className={`h-full w-full bg-transparent flex font-sans select-none overflow-hidden ${isExpanded ? 'items-center justify-center p-10' : 'items-center justify-center p-0'}`}
+    >
       <AnimatePresence mode="wait">
         {isExpanded ? (
           /* Expanded Panel */
@@ -181,9 +162,9 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            onMouseDown={onDragStart}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            style={{ WebKitAppRegion: 'drag' } as any}
             className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col border border-black/5 relative cursor-default"
           >
             {/* Header Content */}
@@ -196,7 +177,7 @@ export default function App() {
               </div>
               
               <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' } as any}>
-                <div className="flex bg-zinc-100 p-1 rounded-xl">
+                <div className="flex bg-zinc-100 p-1 rounded-xl" style={{ WebkitAppRegion: 'no-drag' } as any}>
                   <button 
                     onClick={(e) => { e.stopPropagation(); setView('timer'); }}
                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
@@ -220,6 +201,7 @@ export default function App() {
                 </div>
                 <button 
                   onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
+                  style={{ WebkitAppRegion: 'no-drag' } as any}
                   className="p-2 hover:bg-zinc-100 rounded-full text-zinc-500 transition-colors"
                   title="收起面板"
                 >
@@ -373,24 +355,26 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            onMouseDown={onDragStart}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            style={{ WebKitAppRegion: 'drag' } as any}
             className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden cursor-default"
           >
             {/* 点击展开区域：右侧内容 */}
             <div 
               className="flex items-center gap-3 p-2 pr-4 cursor-pointer" 
               onClick={() => setIsExpanded(true)}
+              style={{ WebkitAppRegion: 'no-drag' } as any}
               title="点击展开"
             >
               <div 
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-zinc-900' : 'bg-orange-500'}`}
+                onClick={(e) => { e.stopPropagation(); handleToggle(); }}
               >
                 {isActive ? (
-                  <Pause className="w-4 h-4 text-white fill-current" onClick={(e) => { e.stopPropagation(); handleToggle(); }} />
+                  <Pause className="w-4 h-4 text-white fill-current" />
                 ) : (
-                  <Play className="w-4 h-4 text-white fill-current ml-0.5" onClick={(e) => { e.stopPropagation(); handleToggle(); }} />
+                  <Play className="w-4 h-4 text-white fill-current ml-0.5" />
                 )}
               </div>
               <div className="flex flex-col">

@@ -60,7 +60,10 @@ function createWindow() {
 // 监听来自渲染进程的状态切换请求
 ipcMain.on('toggle-mini', (event, isMini) => {
   if (!win) return;
-  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  
+  // 获取当前窗口所在的显示器，解决多屏切换消失的问题
+  const currentDisplay = screen.getDisplayNearestPoint(win.getBounds());
+  const { x: displayX, y: displayY, width: displayW, height: displayH } = currentDisplay.workArea;
   
   win.hide();
 
@@ -69,26 +72,26 @@ ipcMain.on('toggle-mini', (event, isMini) => {
     const miniW = 260; 
     const miniH = 80;
     win.setSize(miniW, miniH);
-    win.setPosition(screenWidth - miniW - 10, screenHeight - miniH - 10);
+    // 停靠在当前显示器的右下角
+    win.setPosition(displayX + displayW - miniW - 10, displayY + displayH - miniH - 10);
     // 迷你模式下禁用穿透检测，因为窗口已经足够小了
     win.setIgnoreMouseEvents(false);
   } else {
     const expandedSize = 650;
     win.setSize(expandedSize, expandedSize);
-    win.setPosition(screenWidth - expandedSize - 20, screenHeight - expandedSize - 20);
+    // 停靠在当前显示器的右下角
+    win.setPosition(displayX + displayW - expandedSize - 20, displayY + displayH - expandedSize - 20);
   }
 
   win.setAlwaysOnTop(true, 'screen-saver');
   win.show();
 });
 
-// 核心修复：使用 Electron 原生拖拽接口（业界标准方案）
-// 彻底解决多屏 DPI 缩放导致的漂移问题
-ipcMain.on('window-drag', (event) => {
-  const targetWin = BrowserWindow.fromWebContents(event.sender);
-  if (targetWin) {
-    targetWin.startWindowDrag();
-  }
+// 核心修复：使用 CSS 拖拽（业界最标准方案）
+// 在渲染进程中使用 -webkit-app-region: drag
+// 这里移除之前报错的原生接口调用
+ipcMain.on('window-drag-fix', (event) => {
+  // 仅作为占位，实际拖拽由 CSS 处理
 });
 
 app.whenReady().then(createWindow);
