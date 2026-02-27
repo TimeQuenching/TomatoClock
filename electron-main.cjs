@@ -59,12 +59,17 @@ ipcMain.on('toggle-mini', (event, isMini) => {
     // 切换到迷你模式：缩小窗口并移动到右下角
     const miniSize = 250; 
     win.setSize(miniSize, miniSize);
-    win.setPosition(screenWidth - miniSize - 20, screenHeight - miniSize - 20);
+    // 确保窗口紧贴右下角，考虑 20px 的边距
+    const targetX = Math.floor(screenWidth - miniSize - 20);
+    const targetY = Math.floor(screenHeight - miniSize - 20);
+    win.setPosition(targetX, targetY);
   } else {
     // 切换到展开模式：恢复大窗口
     const expandedSize = 650;
     win.setSize(expandedSize, expandedSize);
-    win.setPosition(screenWidth - expandedSize - 20, screenHeight - expandedSize - 20);
+    const targetX = Math.floor(screenWidth - expandedSize - 20);
+    const targetY = Math.floor(screenHeight - expandedSize - 20);
+    win.setPosition(targetX, targetY);
   }
 });
 

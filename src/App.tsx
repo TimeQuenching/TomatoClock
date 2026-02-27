@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, CheckCircle2, History, Timer as TimerIcon, Plus, ArrowDownRight, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Play, Pause, RotateCcw, CheckCircle2, History, Timer as TimerIcon, Plus, ArrowDownRight, ChevronLeft, ChevronRight, Calendar, GripVertical } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Session {
@@ -128,7 +128,7 @@ export default function App() {
   const progress = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
   return (
-    <div className="h-screen w-screen bg-transparent flex items-center justify-center font-sans select-none overflow-hidden p-10">
+    <div className={`h-screen w-screen bg-transparent flex items-center justify-center font-sans select-none overflow-hidden ${isExpanded ? 'p-10' : 'p-0'}`}>
       <AnimatePresence mode="wait">
         {isExpanded ? (
           /* Expanded Panel */
@@ -244,15 +244,17 @@ export default function App() {
                       onChange={(e) => setTaskName(e.target.value)}
                       disabled={isActive}
                       className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/20 transition-all outline-none text-zinc-800 text-center"
+                      style={{ WebkitAppRegion: 'no-drag' } as any}
                     />
                   </div>
 
                   <div className="mt-6 flex items-center gap-4">
-                    <button onClick={handleReset} className="p-3 rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 transition-colors">
+                    <button onClick={handleReset} className="p-3 rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 transition-colors" style={{ WebkitAppRegion: 'no-drag' } as any}>
                       <RotateCcw className="w-5 h-5" />
                     </button>
                     <button
                       onClick={handleToggle}
+                      style={{ WebkitAppRegion: 'no-drag' } as any}
                       className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all transform active:scale-95 ${
                         isActive ? 'bg-zinc-900 text-white' : 'bg-orange-500 text-white'
                       }`}
@@ -271,7 +273,7 @@ export default function App() {
                   className="flex-1 flex flex-col p-6 overflow-hidden"
                 >
                   {/* Date Navigation */}
-                  <div className="flex items-center justify-between mb-6 bg-zinc-50 p-2 rounded-2xl border border-black/5">
+                  <div className="flex items-center justify-between mb-6 bg-zinc-50 p-2 rounded-2xl border border-black/5" style={{ WebkitAppRegion: 'no-drag' } as any}>
                     <button 
                       onClick={handlePrevDay}
                       className="p-2 hover:bg-white hover:shadow-sm rounded-xl text-zinc-500 transition-all"
@@ -293,7 +295,7 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+                  <div className="flex-1 overflow-y-auto space-y-2 pr-2" style={{ WebkitAppRegion: 'no-drag' } as any}>
                     {sessions.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full text-zinc-300 space-y-3">
                         <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center border border-dashed border-zinc-200">
@@ -330,32 +332,46 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            onClick={() => setIsExpanded(true)}
-            className="group cursor-pointer flex items-center gap-3 bg-white p-2 pr-4 rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all"
-            style={{ WebkitAppRegion: 'drag' } as any}
+            className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden"
           >
+            {/* 专门的拖拽区域：左侧手柄 */}
             <div 
-              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-zinc-900' : 'bg-orange-500'}`}
-              style={{ WebkitAppRegion: 'no-drag' } as any}
+              className="px-1.5 py-4 hover:bg-zinc-50 cursor-move text-zinc-300 hover:text-zinc-400 transition-colors"
+              style={{ WebkitAppRegion: 'drag' } as any}
+              title="按住拖动"
             >
-              {isActive ? (
-                <Pause className="w-4 h-4 text-white fill-current" onClick={handleToggle} />
-              ) : (
-                <Play className="w-4 h-4 text-white fill-current ml-0.5" onClick={handleToggle} />
-              )}
+              <GripVertical className="w-4 h-4" />
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold tabular-nums text-zinc-800 leading-none">{formatTime(timeLeft)}</span>
-              <span className="text-[10px] text-zinc-400 font-medium truncate max-w-[80px] mt-1">
-                {taskName || '未命名任务'}
-              </span>
-            </div>
-            <div className="ml-2 w-1 h-8 bg-zinc-100 rounded-full overflow-hidden">
-              <motion.div 
-                className="w-full bg-orange-500"
-                animate={{ height: `${progress}%` }}
-                transition={{ duration: 1 }}
-              />
+
+            {/* 点击展开区域：右侧内容 */}
+            <div 
+              className="flex items-center gap-3 p-2 pr-4 cursor-pointer" 
+              style={{ WebkitAppRegion: 'no-drag' } as any}
+              onClick={() => setIsExpanded(true)}
+              title="点击展开"
+            >
+              <div 
+                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-zinc-900' : 'bg-orange-500'}`}
+              >
+                {isActive ? (
+                  <Pause className="w-4 h-4 text-white fill-current" onClick={(e) => { e.stopPropagation(); handleToggle(); }} />
+                ) : (
+                  <Play className="w-4 h-4 text-white fill-current ml-0.5" onClick={(e) => { e.stopPropagation(); handleToggle(); }} />
+                )}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold tabular-nums text-zinc-800 leading-none">{formatTime(timeLeft)}</span>
+                <span className="text-[10px] text-zinc-400 font-medium truncate max-w-[80px] mt-1">
+                  {taskName || '未命名任务'}
+                </span>
+              </div>
+              <div className="ml-2 w-1 h-8 bg-zinc-100 rounded-full overflow-hidden">
+                <motion.div 
+                  className="w-full bg-orange-500"
+                  animate={{ height: `${progress}%` }}
+                  transition={{ duration: 1 }}
+                />
+              </div>
             </div>
           </motion.div>
         )}
