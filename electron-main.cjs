@@ -82,32 +82,41 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   win.show();
 });
 
-// 核心修复：原生轮询拖拽（引入 DPI 补偿，彻底解决漂移）
+// 核心修复：物理像素级无漂移拖拽
 let dragTimer = null;
-let startMousePos = { x: 0, y: 0 };
-let startWinPos = [0, 0];
+let startMousePosPhys = { x: 0, y: 0 };
+let startWinPosPhys = { x: 0, y: 0 };
 
 ipcMain.on('window-drag-start', () => {
   if (!win) return;
   
-  startMousePos = screen.getCursorScreenPoint();
-  startWinPos = win.getPosition();
+  const dipMousePos = screen.getCursorScreenPoint();
+  const dipWinPos = win.getPosition();
+  
+  // 将逻辑坐标 (DIP) 转换为物理像素坐标，彻底消除缩放误差
+  startMousePosPhys = screen.dipToScreenPoint(dipMousePos);
+  startWinPosPhys = screen.dipToScreenPoint({ x: dipWinPos[0], y: dipWinPos[1] });
 
   if (dragTimer) clearInterval(dragTimer);
+  
   dragTimer = setInterval(() => {
-    const currentMouse = screen.getCursorScreenPoint();
+    const currentDipMouse = screen.getCursorScreenPoint();
+    const currentPhysMouse = screen.dipToScreenPoint(currentDipMouse);
     
-    // 终极修复：使用 Math.round 确保逻辑像素对齐，并使用 setBounds 替代 setPosition
-    const nextX = Math.round(startWinPos[0] + (currentMouse.x - startMousePos.x));
-    const nextY = Math.round(startWinPos[1] + (currentMouse.y - startMousePos.y));
+    // 在物理像素层面计算位移
+    const dx = currentPhysMouse.x - startMousePosPhys.x;
+    const dy = currentPhysMouse.y - startMousePosPhys.y;
     
-    const [width, height] = win.getSize();
-    win.setBounds({
-      x: nextX,
-      y: nextY,
-      width: width,
-      height: height
-    });
+    // 计算新的物理位置并转回逻辑坐标给 Electron 使用
+    const nextPhysPos = {
+      x: startWinPosPhys.x + dx,
+      y: startWinPosPhys.y + dy
+    };
+    
+    const nextDipPos = screen.screenToDipPoint(nextPhysPos);
+    
+    // 显式设置，不使用 setBounds 以减少系统重绘干扰
+    win.setPosition(Math.round(nextDipPos.x), Math.round(nextDipPos.y));
   }, 10);
 });
 

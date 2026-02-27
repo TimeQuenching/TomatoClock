@@ -131,12 +131,14 @@ export default function App() {
   useEffect(() => {
     if (window.require) {
       const { ipcRenderer } = window.require('electron');
-      // 初始状态：开启穿透，让点击可以穿过透明区域
+      // 初始状态：开启穿透
       ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
     }
   }, []);
 
-  const handleMouseEnter = () => {
+  // 使用更稳健的事件监听
+  const handleMouseEnter = (e: React.MouseEvent) => {
+    // 只有当真正进入了有背景的容器时才关闭穿透
     if (window.require) {
       const { ipcRenderer } = window.require('electron');
       ipcRenderer.send('set-ignore-mouse-events', false);
