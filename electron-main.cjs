@@ -1,8 +1,9 @@
-const { app, BrowserWindow, screen } = require('electron');
+const { app, BrowserWindow, screen, ipcMain } = require('electron');
 const path = require('path');
 const { fork } = require('child_process');
 
 let serverProcess;
+let win;
 
 function createWindow() {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
@@ -10,14 +11,14 @@ function createWindow() {
   const winWidth = 650;
   const winHeight = 650;
 
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: winWidth,
     height: winHeight,
-    // 暂时居中显示，确保你能看到它
-    center: true, 
+    x: screenWidth - winWidth - 20,
+    y: screenHeight - winHeight - 20,
     frame: false,
     transparent: true,
-    backgroundColor: '#00000000', // 显式设置透明背景
+    backgroundColor: '#00000000',
     alwaysOnTop: true,
     resizable: false,
     show: true,
@@ -30,7 +31,6 @@ function createWindow() {
 
   const isDev = process.env.NODE_ENV === 'development';
   
-  // 启动后端
   serverProcess = fork(path.join(__dirname, 'server.ts'), [], {
     env: { ...process.env, NODE_ENV: isDev ? 'development' : 'production' },
     execArgv: ['--import', 'tsx']
@@ -40,8 +40,6 @@ function createWindow() {
     win.loadURL('http://localhost:3000')
       .then(() => {
         console.log('Success: Page Loaded');
-        // 成功后自动打开调试工具，方便你排查
-        win.webContents.openDevTools({ mode: 'detach' });
       })
       .catch(() => {
         console.log('Retrying connection to server...');
@@ -49,9 +47,26 @@ function createWindow() {
       });
   };
 
-  // 初始等待 3 秒
   setTimeout(loadURL, 3000);
 }
+
+// 监听来自渲染进程的状态切换请求
+ipcMain.on('toggle-mini', (event, isMini) => {
+  if (!win) return;
+  const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  
+  if (isMini) {
+    // 切换到迷你模式：缩小窗口并移动到右下角
+    const miniSize = 250; 
+    win.setSize(miniSize, miniSize);
+    win.setPosition(screenWidth - miniSize - 20, screenHeight - miniSize - 20);
+  } else {
+    // 切换到展开模式：恢复大窗口
+    const expandedSize = 650;
+    win.setSize(expandedSize, expandedSize);
+    win.setPosition(screenWidth - expandedSize - 20, screenHeight - expandedSize - 20);
+  }
+});
 
 app.whenReady().then(createWindow);
 

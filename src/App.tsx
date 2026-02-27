@@ -72,6 +72,18 @@ export default function App() {
     setSelectedDate(d.toISOString().split('T')[0]);
   };
 
+  useEffect(() => {
+    // 通知 Electron 调整窗口大小
+    try {
+      if (window.require) {
+        const { ipcRenderer } = window.require('electron');
+        ipcRenderer.send('toggle-mini', !isExpanded);
+      }
+    } catch (e) {
+      console.log('Not in Electron environment');
+    }
+  }, [isExpanded]);
+
   const handleToggle = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (!taskName.trim()) {
@@ -320,8 +332,12 @@ export default function App() {
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => setIsExpanded(true)}
             className="group cursor-pointer flex items-center gap-3 bg-white p-2 pr-4 rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all"
+            style={{ WebkitAppRegion: 'drag' } as any}
           >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-zinc-900' : 'bg-orange-500'}`}>
+            <div 
+              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-zinc-900' : 'bg-orange-500'}`}
+              style={{ WebkitAppRegion: 'no-drag' } as any}
+            >
               {isActive ? (
                 <Pause className="w-4 h-4 text-white fill-current" onClick={handleToggle} />
               ) : (
