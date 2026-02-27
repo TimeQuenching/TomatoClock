@@ -160,7 +160,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-screen bg-transparent flex items-center justify-center font-sans select-none overflow-hidden p-10">
+    <div className={`h-screen w-screen bg-transparent flex font-sans select-none overflow-hidden ${isExpanded ? 'items-center justify-center p-10' : 'items-center justify-center p-2'}`}>
       <AnimatePresence mode="wait">
         {isExpanded ? (
           /* Expanded Panel */

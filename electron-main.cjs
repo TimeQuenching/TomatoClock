@@ -56,9 +56,9 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   
   if (isMini) {
-    // 迷你模式：小而精，居中对齐内容
-    const miniW = 300; 
-    const miniH = 120;
+    // 迷你模式：稍微调大一点，确保阴影和内容不被切断
+    const miniW = 350; 
+    const miniH = 150;
     win.setSize(miniW, miniH);
     // 移动到右下角，留出 20px 边距
     win.setPosition(screenWidth - miniW - 20, screenHeight - miniH - 20);
