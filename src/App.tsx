@@ -127,32 +127,49 @@ export default function App() {
 
   const progress = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
-  // 鼠标穿透处理：解决“挡住网页/任务栏”的问题
+  // 鼠标穿透处理：已移除，改用精确窗口尺寸方案
   useEffect(() => {
-    if (window.require) {
-      const { ipcRenderer } = window.require('electron');
-      // 初始状态：开启穿透
-      ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
-    }
-  }, []);
-
-  const handleMouseEnter = () => {
+    // 初始状态：确保不穿透
     if (window.require) {
       const { ipcRenderer } = window.require('electron');
       ipcRenderer.send('set-ignore-mouse-events', false);
     }
-  };
+  }, []);
 
-  const handleMouseLeave = () => {
+  // 通用拖拽处理函数：高精度 JS 方案，解决 DPI 漂移
+  const onDragStart = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === 'BUTTON' || 
+      target.tagName === 'INPUT' || 
+      target.closest('button') || 
+      target.closest('svg')
+    ) {
+      return;
+    }
+
     if (window.require) {
       const { ipcRenderer } = window.require('electron');
-      ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
+      ipcRenderer.send('window-drag-start');
+      
+      const handleMouseMove = () => {
+        ipcRenderer.send('window-drag-move');
+      };
+      
+      const handleMouseUp = () => {
+        ipcRenderer.send('window-drag-end');
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+      
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
     }
   };
 
   return (
     <div 
-      className={`h-full w-full bg-transparent flex font-sans select-none overflow-hidden ${isExpanded ? 'items-center justify-center p-10' : 'items-center justify-center p-0'}`}
+      className={`h-full w-full bg-transparent flex font-sans select-none overflow-hidden ${isExpanded ? 'items-center justify-center' : 'items-center justify-center'}`}
     >
       <AnimatePresence mode="wait">
         {isExpanded ? (
@@ -162,9 +179,7 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            style={{ WebKitAppRegion: 'drag' } as any}
+            onMouseDown={onDragStart}
             className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col border border-black/5 relative cursor-default"
           >
             {/* Header Content */}
@@ -355,9 +370,7 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            style={{ WebKitAppRegion: 'drag' } as any}
+            onMouseDown={onDragStart}
             className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden cursor-default"
           >
             {/* 点击展开区域：右侧内容 */}

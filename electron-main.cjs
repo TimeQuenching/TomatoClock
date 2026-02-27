@@ -61,37 +61,64 @@ function createWindow() {
 ipcMain.on('toggle-mini', (event, isMini) => {
   if (!win) return;
   
-  // 获取当前窗口所在的显示器，解决多屏切换消失的问题
+  // 获取当前窗口所在的显示器
   const currentDisplay = screen.getDisplayNearestPoint(win.getBounds());
   const { x: displayX, y: displayY, width: displayW, height: displayH } = currentDisplay.workArea;
   
   win.hide();
 
   if (isMini) {
-    // 极致尺寸：刚好包裹小组件，不留任何透明区域挡住用户点击
-    const miniW = 260; 
-    const miniH = 80;
+    // 迷你模式：窗口尺寸与 UI 完全一致，不再需要鼠标穿透
+    const miniW = 220; 
+    const miniH = 60;
+    win.setResizable(true); // 允许修改尺寸
     win.setSize(miniW, miniH);
+    win.setResizable(false);
     // 停靠在当前显示器的右下角
-    win.setPosition(displayX + displayW - miniW - 10, displayY + displayH - miniH - 10);
-    // 迷你模式下禁用穿透检测，因为窗口已经足够小了
-    win.setIgnoreMouseEvents(false);
+    win.setPosition(displayX + displayW - miniW - 20, displayY + displayH - miniH - 20);
   } else {
-    const expandedSize = 650;
-    win.setSize(expandedSize, expandedSize);
+    // 展开模式：窗口尺寸与 UI 完全一致
+    const expandedW = 500;
+    const expandedH = 500;
+    win.setResizable(true);
+    win.setSize(expandedW, expandedH);
+    win.setResizable(false);
     // 停靠在当前显示器的右下角
-    win.setPosition(displayX + displayW - expandedSize - 20, displayY + displayH - expandedSize - 20);
+    win.setPosition(displayX + displayW - expandedW - 40, displayY + displayH - expandedH - 40);
   }
 
+  // 彻底关闭鼠标穿透，因为窗口现在和内容一样大，不会误挡
+  win.setIgnoreMouseEvents(false);
   win.setAlwaysOnTop(true, 'screen-saver');
   win.show();
 });
 
-// 核心修复：使用 CSS 拖拽（业界最标准方案）
-// 在渲染进程中使用 -webkit-app-region: drag
-// 这里移除之前报错的原生接口调用
-ipcMain.on('window-drag-fix', (event) => {
-  // 仅作为占位，实际拖拽由 CSS 处理
+// 核心修复：高精度坐标同步拖拽（解决多屏 DPI 漂移）
+let isDragging = false;
+let mouseOffset = { x: 0, y: 0 };
+
+ipcMain.on('window-drag-start', (event) => {
+  const cursor = screen.getCursorScreenPoint();
+  const winPos = win.getPosition();
+  // 记录初始偏移（逻辑像素）
+  mouseOffset = {
+    x: cursor.x - winPos[0],
+    y: cursor.y - winPos[1]
+  };
+  isDragging = true;
+});
+
+ipcMain.on('window-drag-move', (event) => {
+  if (!isDragging || !win) return;
+  const cursor = screen.getCursorScreenPoint();
+  // 直接计算目标位置，不进行累加，防止误差累积
+  const nextX = Math.round(cursor.x - mouseOffset.x);
+  const nextY = Math.round(cursor.y - mouseOffset.y);
+  win.setPosition(nextX, nextY);
+});
+
+ipcMain.on('window-drag-end', () => {
+  isDragging = false;
 });
 
 app.whenReady().then(createWindow);
