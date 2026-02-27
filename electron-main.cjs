@@ -2,30 +2,25 @@ const { app, BrowserWindow, screen } = require('electron');
 const path = require('path');
 const { fork } = require('child_process');
 
-// 禁用硬件加速以解决部分 Windows 上的透明窗口显示问题
-app.disableHardwareAcceleration();
-
 let serverProcess;
 
 function createWindow() {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
 
-  // 确保窗口不会超出屏幕边界
   const winWidth = 650;
   const winHeight = 650;
-  const x = Math.max(0, screenWidth - winWidth - 20);
-  const y = Math.max(0, screenHeight - winHeight - 20);
 
   const win = new BrowserWindow({
     width: winWidth,
     height: winHeight,
-    x: x,
-    y: y,
+    // 暂时居中显示，确保你能看到它
+    center: true, 
     frame: false,
     transparent: true,
+    backgroundColor: '#00000000', // 显式设置透明背景
     alwaysOnTop: true,
     resizable: false,
-    show: false, // 先隐藏，加载成功后再显示
+    show: true,
     hasShadow: false,
     webPreferences: {
       nodeIntegration: true,
@@ -35,6 +30,7 @@ function createWindow() {
 
   const isDev = process.env.NODE_ENV === 'development';
   
+  // 启动后端
   serverProcess = fork(path.join(__dirname, 'server.ts'), [], {
     env: { ...process.env, NODE_ENV: isDev ? 'development' : 'production' },
     execArgv: ['--import', 'tsx']
@@ -43,18 +39,18 @@ function createWindow() {
   const loadURL = () => {
     win.loadURL('http://localhost:3000')
       .then(() => {
-        console.log('页面加载成功');
-        win.show();
-        win.focus();
-        // if (isDev) win.webContents.openDevTools({ mode: 'detach' });
+        console.log('Success: Page Loaded');
+        // 成功后自动打开调试工具，方便你排查
+        win.webContents.openDevTools({ mode: 'detach' });
       })
       .catch(() => {
-        console.log('服务器尚未就绪，1秒后重试...');
+        console.log('Retrying connection to server...');
         setTimeout(loadURL, 1000);
       });
   };
 
-  setTimeout(loadURL, 1000);
+  // 初始等待 3 秒
+  setTimeout(loadURL, 3000);
 }
 
 app.whenReady().then(createWindow);
