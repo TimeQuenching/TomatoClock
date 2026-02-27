@@ -82,7 +82,7 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   win.show();
 });
 
-// 核心修复：原生轮询拖拽（100% 解决漂移）
+// 核心修复：原生轮询拖拽（引入 DPI 补偿，彻底解决漂移）
 let dragTimer = null;
 let startMousePos = { x: 0, y: 0 };
 let startWinPos = [0, 0];
@@ -96,10 +96,18 @@ ipcMain.on('window-drag-start', () => {
   if (dragTimer) clearInterval(dragTimer);
   dragTimer = setInterval(() => {
     const currentMouse = screen.getCursorScreenPoint();
+    
+    // 终极修复：使用 Math.round 确保逻辑像素对齐，并使用 setBounds 替代 setPosition
     const nextX = Math.round(startWinPos[0] + (currentMouse.x - startMousePos.x));
     const nextY = Math.round(startWinPos[1] + (currentMouse.y - startMousePos.y));
     
-    win.setPosition(nextX, nextY);
+    const [width, height] = win.getSize();
+    win.setBounds({
+      x: nextX,
+      y: nextY,
+      width: width,
+      height: height
+    });
   }, 10);
 });
 

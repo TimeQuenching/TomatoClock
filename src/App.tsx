@@ -129,21 +129,26 @@ export default function App() {
 
   // 鼠标穿透处理：解决“挡住网页/任务栏”的问题
   useEffect(() => {
-    const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (window.require) {
-        const { ipcRenderer } = window.require('electron');
-        // 如果鼠标在透明背景上（即没有碰到任何有内容的元素）
-        if (e.target === document.documentElement) {
-          ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
-        } else {
-          ipcRenderer.send('set-ignore-mouse-events', false);
-        }
-      }
-    };
-
-    window.addEventListener('mousemove', handleGlobalMouseMove);
-    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+    if (window.require) {
+      const { ipcRenderer } = window.require('electron');
+      // 初始状态：开启穿透，让点击可以穿过透明区域
+      ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
+    }
   }, []);
+
+  const handleMouseEnter = () => {
+    if (window.require) {
+      const { ipcRenderer } = window.require('electron');
+      ipcRenderer.send('set-ignore-mouse-events', false);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (window.require) {
+      const { ipcRenderer } = window.require('electron');
+      ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
+    }
+  };
 
   // 通用拖拽处理函数
   const onDragStart = (e: React.MouseEvent) => {
@@ -181,6 +186,8 @@ export default function App() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             onMouseDown={onDragStart}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col border border-black/5 relative cursor-default"
           >
             {/* Header Content */}
@@ -371,6 +378,8 @@ export default function App() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onMouseDown={onDragStart}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden cursor-default"
           >
             {/* 点击展开区域：右侧内容 */}
