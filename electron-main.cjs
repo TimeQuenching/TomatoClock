@@ -22,11 +22,18 @@ function createWindow() {
     alwaysOnTop: true,
     resizable: false,
     show: true,
-    hasShadow: false,
+    hasShadow: false, // 禁用原生阴影，防止坐标计算偏移
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
     },
+  });
+
+  // 核心修复：鼠标穿透逻辑
+  // 当鼠标在透明区域时，允许点击穿透到下层窗口
+  ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) win.setIgnoreMouseEvents(ignore, options);
   });
 
   const isDev = process.env.NODE_ENV === 'development';
@@ -87,13 +94,11 @@ ipcMain.on('window-drag-start', (event) => {
 ipcMain.on('window-drag-move', (event) => {
   if (win) {
     const currentMousePos = screen.getCursorScreenPoint();
-    const dx = currentMousePos.x - startMousePos.x;
-    const dy = currentMousePos.y - startMousePos.y;
+    // 使用 Math.round 而不是 floor，并显式转为整数，防止 DPI 缩放导致的漂移
+    const nextX = Math.round(startWinPos[0] + (currentMousePos.x - startMousePos.x));
+    const nextY = Math.round(startWinPos[1] + (currentMousePos.y - startMousePos.y));
     
-    win.setPosition(
-      Math.floor(startWinPos[0] + dx),
-      Math.floor(startWinPos[1] + dy)
-    );
+    win.setPosition(nextX, nextY);
   }
 });
 

@@ -127,6 +127,24 @@ export default function App() {
 
   const progress = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
+  // 鼠标穿透处理：解决“挡住网页/任务栏”的问题
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (window.require) {
+        const { ipcRenderer } = window.require('electron');
+        // 如果鼠标在透明背景上（即没有碰到任何有内容的元素）
+        if (e.target === document.documentElement) {
+          ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
+        } else {
+          ipcRenderer.send('set-ignore-mouse-events', false);
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+  }, []);
+
   // 通用拖拽处理函数
   const onDragStart = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
