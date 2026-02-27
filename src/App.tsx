@@ -127,42 +127,51 @@ export default function App() {
 
   const progress = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
+  // 通用拖拽处理函数
+  const onDragStart = (e: React.MouseEvent) => {
+    // 如果点击的是按钮、输入框或图标，则不触发拖拽
+    const target = e.target as HTMLElement;
+    if (
+      target.tagName === 'BUTTON' || 
+      target.tagName === 'INPUT' || 
+      target.closest('button') || 
+      target.closest('svg')
+    ) {
+      return;
+    }
+
+    if (window.require) {
+      const { ipcRenderer } = window.require('electron');
+      ipcRenderer.send('window-drag-start', { x: e.clientX, y: e.clientY });
+      
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        ipcRenderer.send('window-drag-move', { screenX: moveEvent.screenX, screenY: moveEvent.screenY });
+      };
+      
+      const handleMouseUp = () => {
+        ipcRenderer.send('window-drag-end');
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+      
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+  };
+
   return (
-    <div className={`h-screen w-screen bg-transparent flex font-sans select-none overflow-hidden ${isExpanded ? 'items-center justify-center p-10' : 'items-end justify-end p-2'}`}>
+    <div className="h-screen w-screen bg-transparent flex items-center justify-center font-sans select-none overflow-hidden p-10">
       <AnimatePresence mode="wait">
         {isExpanded ? (
-          /* Expanded Panel (Keep as is) */
+          /* Expanded Panel */
           <motion.div 
             key="expanded"
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col border border-black/5 relative"
+            onMouseDown={onDragStart}
+            className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col border border-black/5 relative cursor-default"
           >
-            {/* Draggable Header Area */}
-            <div 
-              className="absolute top-0 left-0 right-0 h-12 z-0 cursor-move" 
-              onMouseDown={(e) => {
-                if (window.require) {
-                  const { ipcRenderer } = window.require('electron');
-                  ipcRenderer.send('window-drag-start', { x: e.clientX, y: e.clientY });
-                  
-                  const handleMouseMove = (moveEvent: MouseEvent) => {
-                    ipcRenderer.send('window-drag-move', { screenX: moveEvent.screenX, screenY: moveEvent.screenY });
-                  };
-                  
-                  const handleMouseUp = () => {
-                    ipcRenderer.send('window-drag-end');
-                    window.removeEventListener('mousemove', handleMouseMove);
-                    window.removeEventListener('mouseup', handleMouseUp);
-                  };
-                  
-                  window.addEventListener('mousemove', handleMouseMove);
-                  window.addEventListener('mouseup', handleMouseUp);
-                }
-              }}
-            />
-
             {/* Header Content */}
             <div className="p-6 pb-2 flex items-center justify-between z-20 relative">
               <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as any}>
@@ -350,26 +359,8 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden cursor-move"
-            onMouseDown={(e) => {
-              if (window.require) {
-                const { ipcRenderer } = window.require('electron');
-                ipcRenderer.send('window-drag-start', { x: e.clientX, y: e.clientY });
-                
-                const handleMouseMove = (moveEvent: MouseEvent) => {
-                  ipcRenderer.send('window-drag-move', { screenX: moveEvent.screenX, screenY: moveEvent.screenY });
-                };
-                
-                const handleMouseUp = () => {
-                  ipcRenderer.send('window-drag-end');
-                  window.removeEventListener('mousemove', handleMouseMove);
-                  window.removeEventListener('mouseup', handleMouseUp);
-                };
-                
-                window.addEventListener('mousemove', handleMouseMove);
-                window.addEventListener('mouseup', handleMouseUp);
-              }
-            }}
+            onMouseDown={onDragStart}
+            className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden cursor-default"
           >
             {/* 点击展开区域：右侧内容 */}
             <div 

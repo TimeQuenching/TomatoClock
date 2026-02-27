@@ -56,16 +56,18 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   
   if (isMini) {
-    // 迷你模式：使用更窄的窗口，紧贴边缘
-    const miniW = 320; 
-    const miniH = 100;
+    // 迷你模式：小而精，居中对齐内容
+    const miniW = 300; 
+    const miniH = 120;
     win.setSize(miniW, miniH);
-    win.setPosition(Math.floor(screenWidth - miniW - 10), Math.floor(screenHeight - miniH - 10));
+    // 移动到右下角，留出 20px 边距
+    win.setPosition(screenWidth - miniW - 20, screenHeight - miniH - 20);
   } else {
-    // 展开模式
+    // 展开模式：大窗口
     const expandedSize = 650;
     win.setSize(expandedSize, expandedSize);
-    win.setPosition(Math.floor(screenWidth - expandedSize - 20), Math.floor(screenHeight - expandedSize - 20));
+    // 移动到右下角
+    win.setPosition(screenWidth - expandedSize - 20, screenHeight - expandedSize - 20);
   }
 });
 
