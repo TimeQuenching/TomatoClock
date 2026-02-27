@@ -6,8 +6,15 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+html, body {
+  background: transparent !important;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 body {
-  @apply antialiased text-zinc-900 bg-[#F5F5F7];
+  @apply antialiased text-zinc-900;
 }
 
 /* Custom scrollbar for the history list */

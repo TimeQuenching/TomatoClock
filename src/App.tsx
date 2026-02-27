@@ -116,7 +116,7 @@ export default function App() {
   const progress = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
   return (
-    <div className="h-screen w-screen bg-transparent flex items-center justify-center font-sans select-none overflow-hidden">
+    <div className="h-screen w-screen bg-transparent flex items-center justify-center font-sans select-none overflow-hidden p-10">
       <AnimatePresence mode="wait">
         {isExpanded ? (
           /* Expanded Panel */
@@ -134,31 +134,39 @@ export default function App() {
             />
 
             {/* Header Content */}
-            <div className="p-6 pb-2 flex items-center justify-between z-10 relative pointer-events-none">
-              <div className="flex items-center gap-2 pointer-events-auto">
+            <div className="p-6 pb-2 flex items-center justify-between z-20 relative">
+              <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as any}>
                 <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
                   <TimerIcon className="text-white w-5 h-5" />
                 </div>
                 <h1 className="text-lg font-semibold text-zinc-900">TomatoClock</h1>
               </div>
               
-              <div className="flex items-center gap-3 pointer-events-auto">
+              <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' } as any}>
                 <div className="flex bg-zinc-100 p-1 rounded-xl">
                   <button 
-                    onClick={() => setView('timer')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${view === 'timer' ? 'bg-white shadow-sm text-orange-600' : 'text-zinc-600 hover:text-zinc-900'}`}
+                    onClick={(e) => { e.stopPropagation(); setView('timer'); }}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                      view === 'timer' 
+                        ? 'bg-white shadow-sm text-orange-600' 
+                        : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200/50'
+                    }`}
                   >
                     计时
                   </button>
                   <button 
-                    onClick={() => setView('history')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${view === 'history' ? 'bg-white shadow-sm text-orange-600' : 'text-zinc-600 hover:text-zinc-900'}`}
+                    onClick={(e) => { e.stopPropagation(); setView('history'); }}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                      view === 'history' 
+                        ? 'bg-white shadow-sm text-orange-600' 
+                        : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200/50'
+                    }`}
                   >
                     归档
                   </button>
                 </div>
                 <button 
-                  onClick={() => setIsExpanded(false)}
+                  onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
                   className="p-2 hover:bg-zinc-100 rounded-full text-zinc-500 transition-colors"
                   title="收起面板"
                 >

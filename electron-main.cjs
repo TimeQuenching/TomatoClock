@@ -8,14 +8,15 @@ function createWindow() {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
 
   const win = new BrowserWindow({
-    width: 500,
-    height: 500,
-    x: screenWidth - 520,
-    y: screenHeight - 520,
+    width: 650, // 调大窗口，为阴影留空间
+    height: 650,
+    x: screenWidth - 670,
+    y: screenHeight - 670,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     resizable: false,
+    hasShadow: false, // 禁用系统原生阴影，使用我们 CSS 写的漂亮阴影
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
