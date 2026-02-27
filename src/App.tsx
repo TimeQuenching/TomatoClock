@@ -101,7 +101,7 @@ export default function App() {
           duration_minutes: 25
         }),
       });
-      fetchSessions();
+      fetchSessions(selectedDate);
     } catch (err) {
       console.error('Failed to save session', err);
     }
@@ -116,228 +116,226 @@ export default function App() {
   const progress = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
   return (
-    <div className="min-h-screen bg-zinc-100/50 relative overflow-hidden">
-      {/* Background Simulation Info */}
-      <div className="absolute top-8 left-8 text-zinc-400 pointer-events-none">
-        <p className="text-xs font-bold uppercase tracking-widest opacity-50">Desktop Simulation</p>
-        <p className="text-[10px] mt-1">番茄钟已停靠在右下角</p>
-      </div>
+    <div className="h-screen w-screen bg-transparent flex items-center justify-center font-sans select-none overflow-hidden">
+      <AnimatePresence mode="wait">
+        {isExpanded ? (
+          /* Expanded Panel */
+          <motion.div 
+            key="expanded"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col border border-black/5 relative"
+          >
+            {/* Draggable Header Area */}
+            <div 
+              className="absolute top-0 left-0 right-0 h-12 z-0 cursor-move" 
+              style={{ WebkitAppRegion: 'drag' } as any}
+            />
 
-      <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-4">
-        <AnimatePresence mode="wait">
-          {isExpanded ? (
-            /* Expanded Panel */
-            <motion.div 
-              key="expanded"
-              initial={{ opacity: 0, scale: 0.9, y: 20, transformOrigin: 'bottom right' }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/10 overflow-hidden flex flex-col border border-black/5"
-            >
-              {/* Header */}
-              <div className="p-6 pb-2 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                    <TimerIcon className="text-white w-5 h-5" />
-                  </div>
-                  <h1 className="text-lg font-semibold text-zinc-900">TomatoClock</h1>
+            {/* Header Content */}
+            <div className="p-6 pb-2 flex items-center justify-between z-10 relative pointer-events-none">
+              <div className="flex items-center gap-2 pointer-events-auto">
+                <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                  <TimerIcon className="text-white w-5 h-5" />
                 </div>
-                
-                <div className="flex items-center gap-3">
-                  <div className="flex bg-zinc-100 p-1 rounded-xl">
-                    <button 
-                      onClick={() => setView('timer')}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${view === 'timer' ? 'bg-white shadow-sm text-orange-600' : 'text-zinc-600 hover:text-zinc-900'}`}
-                    >
-                      计时
-                    </button>
-                    <button 
-                      onClick={() => setView('history')}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${view === 'history' ? 'bg-white shadow-sm text-orange-600' : 'text-zinc-600 hover:text-zinc-900'}`}
-                    >
-                      归档
-                    </button>
-                  </div>
+                <h1 className="text-lg font-semibold text-zinc-900">TomatoClock</h1>
+              </div>
+              
+              <div className="flex items-center gap-3 pointer-events-auto">
+                <div className="flex bg-zinc-100 p-1 rounded-xl">
                   <button 
-                    onClick={() => setIsExpanded(false)}
-                    className="p-2 hover:bg-zinc-100 rounded-full text-zinc-500 transition-colors"
-                    title="收起面板"
+                    onClick={() => setView('timer')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${view === 'timer' ? 'bg-white shadow-sm text-orange-600' : 'text-zinc-600 hover:text-zinc-900'}`}
                   >
-                    <motion.div whileHover={{ scale: 1.1, y: 2 }} whileTap={{ scale: 0.9 }}>
-                      <ArrowDownRight className="w-5 h-5" />
-                    </motion.div>
+                    计时
+                  </button>
+                  <button 
+                    onClick={() => setView('history')}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${view === 'history' ? 'bg-white shadow-sm text-orange-600' : 'text-zinc-600 hover:text-zinc-900'}`}
+                  >
+                    归档
                   </button>
                 </div>
-              </div>
-
-              <AnimatePresence mode="wait">
-                {view === 'timer' ? (
-                  <motion.div 
-                    key="timer-view"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    className="flex-1 flex flex-col items-center justify-center p-6 relative"
-                  >
-                    {/* Toast Notification */}
-                    <AnimatePresence>
-                      {toast && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -20, x: '-50%' }}
-                          animate={{ opacity: 1, y: 0, x: '-50%' }}
-                          exit={{ opacity: 0, y: -20, x: '-50%' }}
-                          className="absolute top-0 left-1/2 z-50 bg-zinc-900 text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg"
-                        >
-                          {toast}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <div className="relative w-48 h-48 flex items-center justify-center">
-                      <svg className="absolute inset-0 w-full h-full -rotate-90">
-                        <circle cx="96" cy="96" r="88" fill="none" stroke="#F1F1F1" strokeWidth="6" />
-                        <motion.circle
-                          cx="96" cy="96" r="88" fill="none"
-                          stroke={isCompleted ? "#10B981" : "#F97316"}
-                          strokeWidth="6"
-                          strokeDasharray="552.92"
-                          initial={{ strokeDashoffset: 552.92 }}
-                          animate={{ strokeDashoffset: 552.92 - (552.92 * progress) / 100 }}
-                          transition={{ duration: 1, ease: "linear" }}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="flex flex-col items-center">
-                        <span className="text-5xl font-light tracking-tighter text-zinc-900 tabular-nums">
-                          {formatTime(timeLeft)}
-                        </span>
-                        {isCompleted && (
-                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-emerald-600 text-xs font-medium mt-1">完成！</motion.div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mt-8 w-full max-w-[280px]">
-                      <input
-                        type="text"
-                        placeholder="输入任务名称..."
-                        value={taskName}
-                        onChange={(e) => setTaskName(e.target.value)}
-                        disabled={isActive}
-                        className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/20 transition-all outline-none text-zinc-800 text-center"
-                      />
-                    </div>
-
-                    <div className="mt-6 flex items-center gap-4">
-                      <button onClick={handleReset} className="p-3 rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 transition-colors">
-                        <RotateCcw className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={handleToggle}
-                        className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all transform active:scale-95 ${
-                          isActive ? 'bg-zinc-900 text-white' : 'bg-orange-500 text-white'
-                        }`}
-                      >
-                        {isActive ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
-                      </button>
-                      <div className="w-11" />
-                    </div>
+                <button 
+                  onClick={() => setIsExpanded(false)}
+                  className="p-2 hover:bg-zinc-100 rounded-full text-zinc-500 transition-colors"
+                  title="收起面板"
+                >
+                  <motion.div whileHover={{ scale: 1.1, y: 2 }} whileTap={{ scale: 0.9 }}>
+                    <ArrowDownRight className="w-5 h-5" />
                   </motion.div>
-                ) : (
-                  <motion.div 
-                    key="history-view"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="flex-1 flex flex-col p-6 overflow-hidden"
-                  >
-                    {/* Date Navigation */}
-                    <div className="flex items-center justify-between mb-6 bg-zinc-50 p-2 rounded-2xl border border-black/5">
-                      <button 
-                        onClick={handlePrevDay}
-                        className="p-2 hover:bg-white hover:shadow-sm rounded-xl text-zinc-500 transition-all"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-                      
-                      <div className="flex items-center gap-2 text-zinc-800 font-bold text-sm">
-                        <Calendar className="w-4 h-4 text-orange-500" />
-                        <span>{selectedDate === new Date().toISOString().split('T')[0] ? '今天' : selectedDate}</span>
-                      </div>
+                </button>
+              </div>
+            </div>
 
-                      <button 
-                        onClick={handleNextDay}
-                        disabled={selectedDate === new Date().toISOString().split('T')[0]}
-                        className={`p-2 rounded-xl transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'text-zinc-200 cursor-not-allowed' : 'hover:bg-white hover:shadow-sm text-zinc-500'}`}
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto space-y-2 pr-2">
-                      {sessions.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-zinc-300 space-y-3">
-                          <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center border border-dashed border-zinc-200">
-                            <Plus className="w-6 h-6 rotate-45 opacity-20" />
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm font-bold uppercase tracking-widest">空</p>
-                            <p className="text-[10px] mt-1 font-medium italic">该日没有番茄钟记录</p>
-                          </div>
-                        </div>
-                      ) : (
-                        sessions.map((session) => (
-                          <div key={session.id} className="flex items-center justify-between bg-zinc-50 p-4 rounded-2xl border border-black/5 hover:border-orange-200 transition-colors group">
-                            <div className="flex flex-col">
-                              <span className="text-sm font-semibold text-zinc-800 group-hover:text-orange-600 transition-colors">{session.task_name}</span>
-                              <span className="text-[10px] text-zinc-400 font-medium">完成于 {new Date(session.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                            </div>
-                            <div className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-lg">25 MIN</div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              <div className="px-4 py-5 text-center border-t border-zinc-50 bg-white">
-                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest truncate">Focusing on {taskName || '...'}</p>
-              </div>
-            </motion.div>
-          ) : (
-            /* Mini Mode Timer Block */
-            <motion.div
-              key="mini"
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 20 }}
-              onClick={() => setIsExpanded(true)}
-              className="group cursor-pointer flex items-center gap-3 bg-white p-2 pr-4 rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all"
-            >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-zinc-900' : 'bg-orange-500'}`}>
-                {isActive ? (
-                  <Pause className="w-4 h-4 text-white fill-current" onClick={handleToggle} />
-                ) : (
-                  <Play className="w-4 h-4 text-white fill-current ml-0.5" onClick={handleToggle} />
-                )}
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-bold tabular-nums text-zinc-800 leading-none">{formatTime(timeLeft)}</span>
-                <span className="text-[10px] text-zinc-400 font-medium truncate max-w-[80px] mt-1">
-                  {taskName || '未命名任务'}
-                </span>
-              </div>
-              <div className="ml-2 w-1 h-8 bg-zinc-100 rounded-full overflow-hidden">
+            <AnimatePresence mode="wait">
+              {view === 'timer' ? (
                 <motion.div 
-                  className="w-full bg-orange-500"
-                  animate={{ height: `${progress}%` }}
-                  transition={{ duration: 1 }}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+                  key="timer-view"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="flex-1 flex flex-col items-center justify-center p-6 relative"
+                >
+                  {/* Toast Notification */}
+                  <AnimatePresence>
+                    {toast && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -20, x: '-50%' }}
+                        animate={{ opacity: 1, y: 0, x: '-50%' }}
+                        exit={{ opacity: 0, y: -20, x: '-50%' }}
+                        className="absolute top-0 left-1/2 z-50 bg-zinc-900 text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg"
+                      >
+                        {toast}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="relative w-48 h-48 flex items-center justify-center">
+                    <svg className="absolute inset-0 w-full h-full -rotate-90">
+                      <circle cx="96" cy="96" r="88" fill="none" stroke="#F1F1F1" strokeWidth="6" />
+                      <motion.circle
+                        cx="96" cy="96" r="88" fill="none"
+                        stroke={isCompleted ? "#10B981" : "#F97316"}
+                        strokeWidth="6"
+                        strokeDasharray="552.92"
+                        initial={{ strokeDashoffset: 552.92 }}
+                        animate={{ strokeDashoffset: 552.92 - (552.92 * progress) / 100 }}
+                        transition={{ duration: 1, ease: "linear" }}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="flex flex-col items-center">
+                      <span className="text-5xl font-light tracking-tighter text-zinc-900 tabular-nums">
+                        {formatTime(timeLeft)}
+                      </span>
+                      {isCompleted && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-emerald-600 text-xs font-medium mt-1">完成！</motion.div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-8 w-full max-w-[280px]">
+                    <input
+                      type="text"
+                      placeholder="输入任务名称..."
+                      value={taskName}
+                      onChange={(e) => setTaskName(e.target.value)}
+                      disabled={isActive}
+                      className="w-full bg-zinc-50 border border-zinc-100 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500/20 transition-all outline-none text-zinc-800 text-center"
+                    />
+                  </div>
+
+                  <div className="mt-6 flex items-center gap-4">
+                    <button onClick={handleReset} className="p-3 rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 transition-colors">
+                      <RotateCcw className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={handleToggle}
+                      className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all transform active:scale-95 ${
+                        isActive ? 'bg-zinc-900 text-white' : 'bg-orange-500 text-white'
+                      }`}
+                    >
+                      {isActive ? <Pause className="w-6 h-6 fill-current" /> : <Play className="w-6 h-6 fill-current ml-1" />}
+                    </button>
+                    <div className="w-11" />
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="history-view"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  className="flex-1 flex flex-col p-6 overflow-hidden"
+                >
+                  {/* Date Navigation */}
+                  <div className="flex items-center justify-between mb-6 bg-zinc-50 p-2 rounded-2xl border border-black/5">
+                    <button 
+                      onClick={handlePrevDay}
+                      className="p-2 hover:bg-white hover:shadow-sm rounded-xl text-zinc-500 transition-all"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    
+                    <div className="flex items-center gap-2 text-zinc-800 font-bold text-sm">
+                      <Calendar className="w-4 h-4 text-orange-500" />
+                      <span>{selectedDate === new Date().toISOString().split('T')[0] ? '今天' : selectedDate}</span>
+                    </div>
+
+                    <button 
+                      onClick={handleNextDay}
+                      disabled={selectedDate === new Date().toISOString().split('T')[0]}
+                      className={`p-2 rounded-xl transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'text-zinc-200 cursor-not-allowed' : 'hover:bg-white hover:shadow-sm text-zinc-500'}`}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+                    {sessions.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full text-zinc-300 space-y-3">
+                        <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center border border-dashed border-zinc-200">
+                          <Plus className="w-6 h-6 rotate-45 opacity-20" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-bold uppercase tracking-widest">空</p>
+                          <p className="text-[10px] mt-1 font-medium italic">该日没有番茄钟记录</p>
+                        </div>
+                      </div>
+                    ) : (
+                      sessions.map((session) => (
+                        <div key={session.id} className="flex items-center justify-between bg-zinc-50 p-4 rounded-2xl border border-black/5 hover:border-orange-200 transition-colors group">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-zinc-800 group-hover:text-orange-600 transition-colors">{session.task_name}</span>
+                            <span className="text-[10px] text-zinc-400 font-medium">完成于 {new Date(session.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          <div className="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-lg">25 MIN</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <div className="px-4 py-5 text-center border-t border-zinc-50 bg-white">
+              <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest truncate">Focusing on {taskName || '...'}</p>
+            </div>
+          </motion.div>
+        ) : (
+          /* Mini Mode Timer Block */
+          <motion.div
+            key="mini"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => setIsExpanded(true)}
+            className="group cursor-pointer flex items-center gap-3 bg-white p-2 pr-4 rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all"
+          >
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-zinc-900' : 'bg-orange-500'}`}>
+              {isActive ? (
+                <Pause className="w-4 h-4 text-white fill-current" onClick={handleToggle} />
+              ) : (
+                <Play className="w-4 h-4 text-white fill-current ml-0.5" onClick={handleToggle} />
+              )}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold tabular-nums text-zinc-800 leading-none">{formatTime(timeLeft)}</span>
+              <span className="text-[10px] text-zinc-400 font-medium truncate max-w-[80px] mt-1">
+                {taskName || '未命名任务'}
+              </span>
+            </div>
+            <div className="ml-2 w-1 h-8 bg-zinc-100 rounded-full overflow-hidden">
+              <motion.div 
+                className="w-full bg-orange-500"
+                animate={{ height: `${progress}%` }}
+                transition={{ duration: 1 }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
