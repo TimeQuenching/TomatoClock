@@ -62,43 +62,51 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   if (!win) return;
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   
-  // 切换前先隐藏，避免闪烁和定位错误
   win.hide();
 
   if (isMini) {
-    const miniW = 350; 
-    const miniH = 150;
+    // 极致尺寸：刚好包裹小组件，不留任何透明区域挡住用户点击
+    const miniW = 260; 
+    const miniH = 80;
     win.setSize(miniW, miniH);
-    win.setPosition(screenWidth - miniW - 20, screenHeight - miniH - 20);
+    win.setPosition(screenWidth - miniW - 10, screenHeight - miniH - 10);
+    // 迷你模式下禁用穿透检测，因为窗口已经足够小了
+    win.setIgnoreMouseEvents(false);
   } else {
     const expandedSize = 650;
     win.setSize(expandedSize, expandedSize);
     win.setPosition(screenWidth - expandedSize - 20, screenHeight - expandedSize - 20);
   }
 
-  // 确保窗口在最顶层
   win.setAlwaysOnTop(true, 'screen-saver');
   win.show();
 });
 
-// 改进的无漂移拖拽逻辑
-let startWinPos = [0, 0];
+// 核心修复：原生轮询拖拽（100% 解决漂移）
+let dragTimer = null;
 let startMousePos = { x: 0, y: 0 };
+let startWinPos = [0, 0];
 
-ipcMain.on('window-drag-start', (event) => {
+ipcMain.on('window-drag-start', () => {
   if (!win) return;
-  startWinPos = win.getPosition();
+  
   startMousePos = screen.getCursorScreenPoint();
-});
+  startWinPos = win.getPosition();
 
-ipcMain.on('window-drag-move', (event) => {
-  if (win) {
-    const currentMousePos = screen.getCursorScreenPoint();
-    // 使用 Math.round 而不是 floor，并显式转为整数，防止 DPI 缩放导致的漂移
-    const nextX = Math.round(startWinPos[0] + (currentMousePos.x - startMousePos.x));
-    const nextY = Math.round(startWinPos[1] + (currentMousePos.y - startMousePos.y));
+  if (dragTimer) clearInterval(dragTimer);
+  dragTimer = setInterval(() => {
+    const currentMouse = screen.getCursorScreenPoint();
+    const nextX = Math.round(startWinPos[0] + (currentMouse.x - startMousePos.x));
+    const nextY = Math.round(startWinPos[1] + (currentMouse.y - startMousePos.y));
     
     win.setPosition(nextX, nextY);
+  }, 10);
+});
+
+ipcMain.on('window-drag-end', () => {
+  if (dragTimer) {
+    clearInterval(dragTimer);
+    dragTimer = null;
   }
 });
 

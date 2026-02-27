@@ -161,17 +161,11 @@ export default function App() {
       const { ipcRenderer } = window.require('electron');
       ipcRenderer.send('window-drag-start');
       
-      const handleMouseMove = () => {
-        ipcRenderer.send('window-drag-move');
-      };
-      
       const handleMouseUp = () => {
         ipcRenderer.send('window-drag-end');
-        window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mouseup', handleMouseUp);
       };
       
-      window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }
   };
