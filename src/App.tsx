@@ -128,10 +128,10 @@ export default function App() {
   const progress = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
   return (
-    <div className={`h-screen w-screen bg-transparent flex items-center justify-center font-sans select-none overflow-hidden ${isExpanded ? 'p-10' : 'p-0'}`}>
+    <div className={`h-screen w-screen bg-transparent flex font-sans select-none overflow-hidden ${isExpanded ? 'items-center justify-center p-10' : 'items-end justify-end p-2'}`}>
       <AnimatePresence mode="wait">
         {isExpanded ? (
-          /* Expanded Panel */
+          /* Expanded Panel (Keep as is) */
           <motion.div 
             key="expanded"
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -142,7 +142,25 @@ export default function App() {
             {/* Draggable Header Area */}
             <div 
               className="absolute top-0 left-0 right-0 h-12 z-0 cursor-move" 
-              style={{ WebkitAppRegion: 'drag' } as any}
+              onMouseDown={(e) => {
+                if (window.require) {
+                  const { ipcRenderer } = window.require('electron');
+                  ipcRenderer.send('window-drag-start', { x: e.clientX, y: e.clientY });
+                  
+                  const handleMouseMove = (moveEvent: MouseEvent) => {
+                    ipcRenderer.send('window-drag-move', { screenX: moveEvent.screenX, screenY: moveEvent.screenY });
+                  };
+                  
+                  const handleMouseUp = () => {
+                    ipcRenderer.send('window-drag-end');
+                    window.removeEventListener('mousemove', handleMouseMove);
+                    window.removeEventListener('mouseup', handleMouseUp);
+                  };
+                  
+                  window.addEventListener('mousemove', handleMouseMove);
+                  window.addEventListener('mouseup', handleMouseUp);
+                }
+              }}
             />
 
             {/* Header Content */}
@@ -332,21 +350,30 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden"
+            className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden cursor-move"
+            onMouseDown={(e) => {
+              if (window.require) {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.send('window-drag-start', { x: e.clientX, y: e.clientY });
+                
+                const handleMouseMove = (moveEvent: MouseEvent) => {
+                  ipcRenderer.send('window-drag-move', { screenX: moveEvent.screenX, screenY: moveEvent.screenY });
+                };
+                
+                const handleMouseUp = () => {
+                  ipcRenderer.send('window-drag-end');
+                  window.removeEventListener('mousemove', handleMouseMove);
+                  window.removeEventListener('mouseup', handleMouseUp);
+                };
+                
+                window.addEventListener('mousemove', handleMouseMove);
+                window.addEventListener('mouseup', handleMouseUp);
+              }
+            }}
           >
-            {/* 专门的拖拽区域：左侧手柄 */}
-            <div 
-              className="px-1.5 py-4 hover:bg-zinc-50 cursor-move text-zinc-300 hover:text-zinc-400 transition-colors"
-              style={{ WebkitAppRegion: 'drag' } as any}
-              title="按住拖动"
-            >
-              <GripVertical className="w-4 h-4" />
-            </div>
-
             {/* 点击展开区域：右侧内容 */}
             <div 
               className="flex items-center gap-3 p-2 pr-4 cursor-pointer" 
-              style={{ WebkitAppRegion: 'no-drag' } as any}
               onClick={() => setIsExpanded(true)}
               title="点击展开"
             >

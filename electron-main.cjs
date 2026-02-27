@@ -56,21 +56,36 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   
   if (isMini) {
-    // 切换到迷你模式：缩小窗口并移动到右下角
-    const miniSize = 250; 
-    win.setSize(miniSize, miniSize);
-    // 确保窗口紧贴右下角，考虑 20px 的边距
-    const targetX = Math.floor(screenWidth - miniSize - 20);
-    const targetY = Math.floor(screenHeight - miniSize - 20);
-    win.setPosition(targetX, targetY);
+    // 迷你模式：使用更窄的窗口，紧贴边缘
+    const miniW = 320; 
+    const miniH = 100;
+    win.setSize(miniW, miniH);
+    win.setPosition(Math.floor(screenWidth - miniW - 10), Math.floor(screenHeight - miniH - 10));
   } else {
-    // 切换到展开模式：恢复大窗口
+    // 展开模式
     const expandedSize = 650;
     win.setSize(expandedSize, expandedSize);
-    const targetX = Math.floor(screenWidth - expandedSize - 20);
-    const targetY = Math.floor(screenHeight - expandedSize - 20);
-    win.setPosition(targetX, targetY);
+    win.setPosition(Math.floor(screenWidth - expandedSize - 20), Math.floor(screenHeight - expandedSize - 20));
   }
+});
+
+// 原生拖拽实现：解决 CSS 拖拽在 Windows 上的各种玄学问题
+let isDragging = false;
+let mouseOffset = { x: 0, y: 0 };
+
+ipcMain.on('window-drag-start', (event, { x, y }) => {
+  isDragging = true;
+  mouseOffset = { x, y };
+});
+
+ipcMain.on('window-drag-move', (event, { screenX, screenY }) => {
+  if (isDragging && win) {
+    win.setPosition(screenX - mouseOffset.x, screenY - mouseOffset.y);
+  }
+});
+
+ipcMain.on('window-drag-end', () => {
+  isDragging = false;
 });
 
 app.whenReady().then(createWindow);
