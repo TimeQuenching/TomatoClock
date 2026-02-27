@@ -129,7 +129,6 @@ export default function App() {
 
   // 通用拖拽处理函数
   const onDragStart = (e: React.MouseEvent) => {
-    // 如果点击的是按钮、输入框或图标，则不触发拖拽
     const target = e.target as HTMLElement;
     if (
       target.tagName === 'BUTTON' || 
@@ -142,10 +141,10 @@ export default function App() {
 
     if (window.require) {
       const { ipcRenderer } = window.require('electron');
-      ipcRenderer.send('window-drag-start', { x: e.clientX, y: e.clientY });
+      ipcRenderer.send('window-drag-start');
       
-      const handleMouseMove = (moveEvent: MouseEvent) => {
-        ipcRenderer.send('window-drag-move', { screenX: moveEvent.screenX, screenY: moveEvent.screenY });
+      const handleMouseMove = () => {
+        ipcRenderer.send('window-drag-move');
       };
       
       const handleMouseUp = () => {
@@ -160,7 +159,7 @@ export default function App() {
   };
 
   return (
-    <div className={`h-screen w-screen bg-transparent flex font-sans select-none overflow-hidden ${isExpanded ? 'items-center justify-center p-10' : 'items-center justify-center p-2'}`}>
+    <div className={`h-full w-full bg-transparent flex font-sans select-none overflow-hidden ${isExpanded ? 'items-center justify-center p-10' : 'items-center justify-center p-0'}`}>
       <AnimatePresence mode="wait">
         {isExpanded ? (
           /* Expanded Panel */

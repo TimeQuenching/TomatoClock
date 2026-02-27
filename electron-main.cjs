@@ -55,39 +55,46 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   if (!win) return;
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
   
+  // 切换前先隐藏，避免闪烁和定位错误
+  win.hide();
+
   if (isMini) {
-    // 迷你模式：稍微调大一点，确保阴影和内容不被切断
     const miniW = 350; 
     const miniH = 150;
     win.setSize(miniW, miniH);
-    // 移动到右下角，留出 20px 边距
     win.setPosition(screenWidth - miniW - 20, screenHeight - miniH - 20);
   } else {
-    // 展开模式：大窗口
     const expandedSize = 650;
     win.setSize(expandedSize, expandedSize);
-    // 移动到右下角
     win.setPosition(screenWidth - expandedSize - 20, screenHeight - expandedSize - 20);
   }
+
+  // 确保窗口在最顶层
+  win.setAlwaysOnTop(true, 'screen-saver');
+  win.show();
 });
 
-// 原生拖拽实现：解决 CSS 拖拽在 Windows 上的各种玄学问题
-let isDragging = false;
-let mouseOffset = { x: 0, y: 0 };
+// 改进的无漂移拖拽逻辑
+let startWinPos = [0, 0];
+let startMousePos = { x: 0, y: 0 };
 
-ipcMain.on('window-drag-start', (event, { x, y }) => {
-  isDragging = true;
-  mouseOffset = { x, y };
+ipcMain.on('window-drag-start', (event) => {
+  if (!win) return;
+  startWinPos = win.getPosition();
+  startMousePos = screen.getCursorScreenPoint();
 });
 
-ipcMain.on('window-drag-move', (event, { screenX, screenY }) => {
-  if (isDragging && win) {
-    win.setPosition(screenX - mouseOffset.x, screenY - mouseOffset.y);
+ipcMain.on('window-drag-move', (event) => {
+  if (win) {
+    const currentMousePos = screen.getCursorScreenPoint();
+    const dx = currentMousePos.x - startMousePos.x;
+    const dy = currentMousePos.y - startMousePos.y;
+    
+    win.setPosition(
+      Math.floor(startWinPos[0] + dx),
+      Math.floor(startWinPos[1] + dy)
+    );
   }
-});
-
-ipcMain.on('window-drag-end', () => {
-  isDragging = false;
 });
 
 app.whenReady().then(createWindow);
