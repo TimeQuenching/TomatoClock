@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
     "electron:dev": "cross-env NODE_ENV=development electron .",
     "electron:build": "npm run build && electron-builder"
   },
@@ -38,6 +39,7 @@
     "vite": "^6.2.0"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.0.3",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
