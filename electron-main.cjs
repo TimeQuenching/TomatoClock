@@ -2,28 +2,37 @@ const { app, BrowserWindow, screen } = require('electron');
 const path = require('path');
 const { fork } = require('child_process');
 
+// 禁用硬件加速以解决部分 Windows 上的透明窗口显示问题
+app.disableHardwareAcceleration();
+
 let serverProcess;
 
 function createWindow() {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
 
+  // 确保窗口不会超出屏幕边界
+  const winWidth = 650;
+  const winHeight = 650;
+  const x = Math.max(0, screenWidth - winWidth - 20);
+  const y = Math.max(0, screenHeight - winHeight - 20);
+
   const win = new BrowserWindow({
-    width: 650, // 调大窗口，为阴影留空间
-    height: 650,
-    x: screenWidth - 670,
-    y: screenHeight - 670,
+    width: winWidth,
+    height: winHeight,
+    x: x,
+    y: y,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     resizable: false,
-    hasShadow: false, // 禁用系统原生阴影，使用我们 CSS 写的漂亮阴影
+    show: false, // 先隐藏，加载成功后再显示
+    hasShadow: false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
     },
   });
 
-  // 启动后端服务器
   const isDev = process.env.NODE_ENV === 'development';
   
   serverProcess = fork(path.join(__dirname, 'server.ts'), [], {
@@ -31,15 +40,20 @@ function createWindow() {
     execArgv: ['--import', 'tsx']
   });
 
-  // 循环尝试加载页面，直到服务器就绪
   const loadURL = () => {
-    win.loadURL('http://localhost:3000').catch(() => {
-      console.log('服务器尚未就绪，1秒后重试...');
-      setTimeout(loadURL, 1000);
-    });
+    win.loadURL('http://localhost:3000')
+      .then(() => {
+        console.log('页面加载成功');
+        win.show();
+        win.focus();
+        // if (isDev) win.webContents.openDevTools({ mode: 'detach' });
+      })
+      .catch(() => {
+        console.log('服务器尚未就绪，1秒后重试...');
+        setTimeout(loadURL, 1000);
+      });
   };
 
-  // 初始延迟 1 秒后开始尝试
   setTimeout(loadURL, 1000);
 }
 
