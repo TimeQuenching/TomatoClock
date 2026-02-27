@@ -25,22 +25,21 @@ function createWindow() {
   // 启动后端服务器
   const isDev = process.env.NODE_ENV === 'development';
   
-  // 在生产环境下，我们需要运行编译后的服务器代码或通过 tsx 运行
-  // 这里假设用户本地有 tsx 环境
   serverProcess = fork(path.join(__dirname, 'server.ts'), [], {
     env: { ...process.env, NODE_ENV: isDev ? 'development' : 'production' },
     execArgv: ['--import', 'tsx']
   });
 
-  // 等待服务器启动后加载页面
-  setTimeout(() => {
-    if (isDev) {
-      win.loadURL('http://localhost:3000');
-    } else {
-      // 生产环境也指向本地服务器，因为我们需要数据库 API
-      win.loadURL('http://localhost:3000');
-    }
-  }, 2000);
+  // 循环尝试加载页面，直到服务器就绪
+  const loadURL = () => {
+    win.loadURL('http://localhost:3000').catch(() => {
+      console.log('服务器尚未就绪，1秒后重试...');
+      setTimeout(loadURL, 1000);
+    });
+  };
+
+  // 初始延迟 1 秒后开始尝试
+  setTimeout(loadURL, 1000);
 }
 
 app.whenReady().then(createWindow);
