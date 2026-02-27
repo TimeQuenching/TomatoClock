@@ -82,48 +82,12 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   win.show();
 });
 
-// 核心修复：物理像素级无漂移拖拽
-let dragTimer = null;
-let startMousePosPhys = { x: 0, y: 0 };
-let startWinPosPhys = { x: 0, y: 0 };
-
-ipcMain.on('window-drag-start', () => {
-  if (!win) return;
-  
-  const dipMousePos = screen.getCursorScreenPoint();
-  const dipWinPos = win.getPosition();
-  
-  // 将逻辑坐标 (DIP) 转换为物理像素坐标，彻底消除缩放误差
-  startMousePosPhys = screen.dipToScreenPoint(dipMousePos);
-  startWinPosPhys = screen.dipToScreenPoint({ x: dipWinPos[0], y: dipWinPos[1] });
-
-  if (dragTimer) clearInterval(dragTimer);
-  
-  dragTimer = setInterval(() => {
-    const currentDipMouse = screen.getCursorScreenPoint();
-    const currentPhysMouse = screen.dipToScreenPoint(currentDipMouse);
-    
-    // 在物理像素层面计算位移
-    const dx = currentPhysMouse.x - startMousePosPhys.x;
-    const dy = currentPhysMouse.y - startMousePosPhys.y;
-    
-    // 计算新的物理位置并转回逻辑坐标给 Electron 使用
-    const nextPhysPos = {
-      x: startWinPosPhys.x + dx,
-      y: startWinPosPhys.y + dy
-    };
-    
-    const nextDipPos = screen.screenToDipPoint(nextPhysPos);
-    
-    // 显式设置，不使用 setBounds 以减少系统重绘干扰
-    win.setPosition(Math.round(nextDipPos.x), Math.round(nextDipPos.y));
-  }, 10);
-});
-
-ipcMain.on('window-drag-end', () => {
-  if (dragTimer) {
-    clearInterval(dragTimer);
-    dragTimer = null;
+// 核心修复：使用 Electron 原生拖拽接口（业界标准方案）
+// 彻底解决多屏 DPI 缩放导致的漂移问题
+ipcMain.on('window-drag', (event) => {
+  const targetWin = BrowserWindow.fromWebContents(event.sender);
+  if (targetWin) {
+    targetWin.startWindowDrag();
   }
 });
 

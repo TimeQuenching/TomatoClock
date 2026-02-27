@@ -166,14 +166,8 @@ export default function App() {
 
     if (window.require) {
       const { ipcRenderer } = window.require('electron');
-      ipcRenderer.send('window-drag-start');
-      
-      const handleMouseUp = () => {
-        ipcRenderer.send('window-drag-end');
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-      
-      window.addEventListener('mouseup', handleMouseUp);
+      // 业界标准方案：调用原生拖拽接口，由 OS 处理位移，零漂移，多屏自适应
+      ipcRenderer.send('window-drag');
     }
   };
 
