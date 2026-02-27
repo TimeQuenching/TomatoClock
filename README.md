@@ -1,20 +1,60 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# TomatoClock 🍅
 
-# Run and deploy your AI Studio app
+TomatoClock 是一款专为桌面设计的番茄钟应用。它拥有精致的磨砂玻璃质感界面，支持展开/收起两种模式，并具备智能停靠和原生拖拽功能。
 
-This contains everything you need to run your app locally.
+## ✨ 功能特性
 
-View your app in AI Studio: https://ai.studio/apps/7b84a39f-b0ff-4879-bcb4-b18499c67cb2
+- **双模式切换**：支持全功能展开模式和极简迷你模式。
+- **智能停靠**：收起时自动停靠在屏幕右下角，不占用工作空间。
+- **原生拖拽**：支持在屏幕任何位置自由拖动。
+- **历史归档**：自动记录每日完成的番茄钟，支持按日期查询。
+- **数据持久化**：使用 SQLite 数据库本地存储，数据永不丢失。
+- **置顶显示**：始终保持在窗口最前端，提醒你保持专注。
 
-## Run Locally
+## 🛠️ 技术栈
 
-**Prerequisites:**  Node.js
+- **前端**：React 19, Tailwind CSS 4, Framer Motion
+- **后端**：Express (用于 API 服务)
+- **桌面环境**：Electron
+- **数据库**：Better-SQLite3
 
+## 🚀 快速开始
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 1. 环境准备
+确保你的电脑已安装 [Node.js](https://nodejs.org/) (建议 v18 或更高版本)。
+
+### 2. 安装依赖
+克隆项目后，在根目录运行：
+```bash
+npm install
+```
+
+### 3. 重新编译原生模块 (重要)
+由于项目使用了 `better-sqlite3` 原生模块，在 Electron 环境下运行前需要重新编译：
+```bash
+npm run rebuild
+```
+
+### 4. 启动开发模式
+运行以下命令启动应用：
+```bash
+npm run electron:dev
+```
+
+## 📦 打包部署
+
+如果你想将应用打包成可执行文件 (.exe)，请运行：
+
+```bash
+npm run electron:build
+```
+
+打包完成后，生成的文件将存放在 `release` 目录下。
+
+## 📝 注意事项
+
+- **数据库文件**：应用运行后会在根目录生成 `pomodoro.db` 文件。
+- **透明窗口**：在某些 Windows 系统上，如果遇到窗口显示异常，请确保显卡驱动已更新。
+
+---
+由 AI 辅助开发的效率工具。
