@@ -61,65 +61,39 @@ function createWindow() {
 ipcMain.on('toggle-mini', (event, isMini) => {
   if (!win) return;
   
-  // 获取当前窗口所在的显示器
+  // 核心修复：获取当前窗口所在的显示器，解决多屏停靠偏移问题
   const currentDisplay = screen.getDisplayNearestPoint(win.getBounds());
-  const { x: displayX, y: displayY, width: displayW, height: displayH } = currentDisplay.workArea;
+  const { x: dX, y: dY, width: dW, height: dH } = currentDisplay.workArea;
   
   win.hide();
 
   if (isMini) {
-    // 迷你模式：窗口尺寸与 UI 完全一致，不再需要鼠标穿透
-    const miniW = 220; 
-    const miniH = 60;
-    win.setResizable(true); // 允许修改尺寸
+    // 迷你模式：窗口尺寸与 UI 严格一致
+    const miniW = 240; 
+    const miniH = 70;
+    win.setResizable(true);
     win.setSize(miniW, miniH);
     win.setResizable(false);
-    // 停靠在当前显示器的右下角
-    win.setPosition(displayX + displayW - miniW - 20, displayY + displayH - miniH - 20);
+    // 停靠在当前屏幕右下角
+    win.setPosition(dX + dW - miniW - 20, dY + dH - miniH - 20);
   } else {
-    // 展开模式：窗口尺寸与 UI 完全一致
-    const expandedW = 500;
-    const expandedH = 500;
+    // 展开模式
+    const expW = 500;
+    const expH = 500;
     win.setResizable(true);
-    win.setSize(expandedW, expandedH);
+    win.setSize(expW, expH);
     win.setResizable(false);
-    // 停靠在当前显示器的右下角
-    win.setPosition(displayX + displayW - expandedW - 40, displayY + displayH - expandedH - 40);
+    // 停靠在当前屏幕右下角
+    win.setPosition(dX + dW - expW - 40, dY + dH - expH - 40);
   }
 
-  // 彻底关闭鼠标穿透，因为窗口现在和内容一样大，不会误挡
+  // 彻底禁用鼠标穿透，因为窗口现在和内容一样大，不会误挡
   win.setIgnoreMouseEvents(false);
   win.setAlwaysOnTop(true, 'screen-saver');
   win.show();
 });
 
-// 核心修复：高精度坐标同步拖拽（解决多屏 DPI 漂移）
-let isDragging = false;
-let mouseOffset = { x: 0, y: 0 };
-
-ipcMain.on('window-drag-start', (event) => {
-  const cursor = screen.getCursorScreenPoint();
-  const winPos = win.getPosition();
-  // 记录初始偏移（逻辑像素）
-  mouseOffset = {
-    x: cursor.x - winPos[0],
-    y: cursor.y - winPos[1]
-  };
-  isDragging = true;
-});
-
-ipcMain.on('window-drag-move', (event) => {
-  if (!isDragging || !win) return;
-  const cursor = screen.getCursorScreenPoint();
-  // 直接计算目标位置，不进行累加，防止误差累积
-  const nextX = Math.round(cursor.x - mouseOffset.x);
-  const nextY = Math.round(cursor.y - mouseOffset.y);
-  win.setPosition(nextX, nextY);
-});
-
-ipcMain.on('window-drag-end', () => {
-  isDragging = false;
-});
+// 移除所有手动拖拽 IPC，回归 CSS 拖拽
 
 app.whenReady().then(createWindow);
 

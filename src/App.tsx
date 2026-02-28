@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, CheckCircle2, History, Timer as TimerIcon, Plus, ArrowDownRight, ChevronLeft, ChevronRight, Calendar, GripVertical } from 'lucide-react';
+import { Play, Pause, RotateCcw, CheckCircle2, History, Timer as TimerIcon, Plus, ArrowDownRight, ChevronLeft, ChevronRight, Calendar, GripVertical, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Session {
@@ -127,49 +127,17 @@ export default function App() {
 
   const progress = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
-  // 鼠标穿透处理：已移除，改用精确窗口尺寸方案
+  // 彻底移除 JS 拖拽和鼠标穿透逻辑，回归原生 CSS 拖拽
   useEffect(() => {
-    // 初始状态：确保不穿透
     if (window.require) {
       const { ipcRenderer } = window.require('electron');
       ipcRenderer.send('set-ignore-mouse-events', false);
     }
   }, []);
 
-  // 通用拖拽处理函数：高精度 JS 方案，解决 DPI 漂移
-  const onDragStart = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (
-      target.tagName === 'BUTTON' || 
-      target.tagName === 'INPUT' || 
-      target.closest('button') || 
-      target.closest('svg')
-    ) {
-      return;
-    }
-
-    if (window.require) {
-      const { ipcRenderer } = window.require('electron');
-      ipcRenderer.send('window-drag-start');
-      
-      const handleMouseMove = () => {
-        ipcRenderer.send('window-drag-move');
-      };
-      
-      const handleMouseUp = () => {
-        ipcRenderer.send('window-drag-end');
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-      
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-  };
-
   return (
     <div 
-      className={`h-full w-full bg-transparent flex font-sans select-none overflow-hidden ${isExpanded ? 'items-center justify-center' : 'items-center justify-center'}`}
+      className={`h-full w-full bg-transparent flex font-sans select-none overflow-hidden items-center justify-center`}
     >
       <AnimatePresence mode="wait">
         {isExpanded ? (
@@ -179,7 +147,7 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            onMouseDown={onDragStart}
+            style={{ WebkitAppRegion: 'drag' } as any}
             className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col border border-black/5 relative cursor-default"
           >
             {/* Header Content */}
@@ -370,19 +338,17 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            onMouseDown={onDragStart}
+            style={{ WebkitAppRegion: 'drag' } as any}
             className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden cursor-default"
           >
-            {/* 点击展开区域：右侧内容 */}
+            {/* 迷你模式：点击展开区域改为特定的图标按钮，防止拖动时误触发变大 */}
             <div 
-              className="flex items-center gap-3 p-2 pr-4 cursor-pointer" 
-              onClick={() => setIsExpanded(true)}
-              style={{ WebkitAppRegion: 'no-drag' } as any}
-              title="点击展开"
+              className="flex items-center gap-3 p-2 pr-4" 
             >
               <div 
                 className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-zinc-900' : 'bg-orange-500'}`}
                 onClick={(e) => { e.stopPropagation(); handleToggle(); }}
+                style={{ WebkitAppRegion: 'no-drag' } as any}
               >
                 {isActive ? (
                   <Pause className="w-4 h-4 text-white fill-current" />
@@ -396,12 +362,13 @@ export default function App() {
                   {taskName || '未命名任务'}
                 </span>
               </div>
-              <div className="ml-2 w-1 h-8 bg-zinc-100 rounded-full overflow-hidden">
-                <motion.div 
-                  className="w-full bg-orange-500"
-                  animate={{ height: `${progress}%` }}
-                  transition={{ duration: 1 }}
-                />
+              <div 
+                className="ml-2 p-1.5 hover:bg-zinc-100 rounded-lg transition-colors cursor-pointer text-zinc-400 hover:text-orange-500"
+                onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
+                style={{ WebkitAppRegion: 'no-drag' } as any}
+                title="展开面板"
+              >
+                <Maximize2 className="w-4 h-4" />
               </div>
             </div>
           </motion.div>
