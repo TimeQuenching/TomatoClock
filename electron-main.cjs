@@ -74,8 +74,9 @@ ipcMain.on('toggle-mini', (event, isMini) => {
     win.setResizable(true);
     win.setSize(miniW, miniH);
     win.setResizable(false);
-    // 停靠在当前屏幕右下角
-    win.setPosition(dX + dW - miniW - 20, dY + dH - miniH - 20);
+    // 停靠在当前屏幕右下角，增加右边距防止跨屏（向左挪动半个面板宽度 + 基础边距）
+    const rightMargin = (miniW / 2) + 20;
+    win.setPosition(dX + dW - miniW - rightMargin, dY + dH - miniH - 20);
   } else {
     // 展开模式
     const expW = 500;
@@ -83,8 +84,8 @@ ipcMain.on('toggle-mini', (event, isMini) => {
     win.setResizable(true);
     win.setSize(expW, expH);
     win.setResizable(false);
-    // 停靠在当前屏幕右下角
-    win.setPosition(dX + dW - expW - 40, dY + dH - expH - 40);
+    // 展开模式也适当增加边距
+    win.setPosition(dX + dW - expW - 60, dY + dH - expH - 40);
   }
 
   // 彻底禁用鼠标穿透，因为窗口现在和内容一样大，不会误挡
