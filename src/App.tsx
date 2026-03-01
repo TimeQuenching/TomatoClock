@@ -154,28 +154,13 @@ export default function App() {
 
   const progress = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
-  // 智能点击穿透：解决“缓冲区挡住下方应用”的问题
+  // 彻底移除 JS 拖拽和鼠标穿透逻辑，回归原生 CSS 拖拽
   useEffect(() => {
-    if (window.require) {
-      const { ipcRenderer } = window.require('electron');
-      // 初始状态：开启穿透（因为窗口比 UI 大）
-      ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
-    }
-  }, []);
-
-  const handleMouseEnter = () => {
     if (window.require) {
       const { ipcRenderer } = window.require('electron');
       ipcRenderer.send('set-ignore-mouse-events', false);
     }
-  };
-
-  const handleMouseLeave = () => {
-    if (window.require) {
-      const { ipcRenderer } = window.require('electron');
-      ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
-    }
-  };
+  }, []);
 
   return (
     <div 
@@ -189,8 +174,6 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
             style={{ WebkitAppRegion: 'drag' } as any}
             className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col border border-black/5 relative cursor-default"
           >
@@ -460,8 +443,6 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
             style={{ WebkitAppRegion: 'drag' } as any}
             className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden cursor-default"
           >

@@ -68,26 +68,33 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   win.hide();
 
   if (isMini) {
-    // 迷你模式：增加缓冲区给阴影空间 (UI 约 240x70)
+    // 迷你模式：UI 约 240x70，窗口 320x150
     const winW = 320; 
     const winH = 150;
     win.setResizable(true);
     win.setSize(winW, winH);
     win.setResizable(false);
-    // 补偿缓冲区，确保视觉上的右下角位置不变
-    win.setPosition(dX + dW - winW + 20, dY + dH - winH + 20);
+    
+    // 核心修复：确保 UI 实体向左挪动半个面板宽度，且不跨屏
+    // 计算逻辑：屏幕起点 + 屏幕宽度 - 窗口宽度 - (半个面板宽120 + 边距20) + 窗口内补白40
+    const x = dX + dW - winW - 100; 
+    const y = dY + dH - winH - 10;
+    win.setPosition(x, y);
   } else {
-    // 展开模式：增加缓冲区 (UI 500x500)
+    // 展开模式：UI 500x500，窗口 600x600
     const winW = 600;
     const winH = 600;
     win.setResizable(true);
     win.setSize(winW, winH);
     win.setResizable(false);
-    // 补偿缓冲区
-    win.setPosition(dX + dW - winW + 20, dY + dH - winH + 20);
+    
+    // 展开模式也向左挪动，确保不跨屏
+    const x = dX + dW - winW - 50;
+    const y = dY + dH - winH - 20;
+    win.setPosition(x, y);
   }
 
-  // 彻底禁用鼠标穿透，因为窗口现在和内容一样大，不会误挡
+  // 彻底关闭鼠标穿透，确保 CSS 拖拽 100% 可用
   win.setIgnoreMouseEvents(false);
   win.setAlwaysOnTop(true, 'screen-saver');
   win.show();
