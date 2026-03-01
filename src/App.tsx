@@ -33,6 +33,13 @@ export default function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const playNotificationSound = () => {
+    // 使用一个清脆的提示音
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    audio.volume = 0.5;
+    audio.play().catch(e => console.error('Error playing sound:', e));
+  };
+
   useEffect(() => {
     if (isActive && timeLeft > 0) {
       timerRef.current = setInterval(() => {
@@ -130,6 +137,8 @@ export default function App() {
   const handleComplete = async () => {
     setIsActive(false);
     setIsCompleted(true);
+    playNotificationSound();
+    showToast('恭喜！完成了一个番茄钟 🍅');
     
     try {
       await fetch('/api/sessions', {
@@ -175,7 +184,7 @@ export default function App() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             style={{ WebkitAppRegion: 'drag' } as any}
-            className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col border border-black/5 relative cursor-default"
+            className="w-[500px] h-[500px] bg-white rounded-[32px] overflow-hidden flex flex-col border border-black/10 relative cursor-default"
           >
             {/* Header Content */}
             <div className="p-6 pb-2 flex items-center justify-between z-20 relative">
@@ -192,7 +201,7 @@ export default function App() {
                     onClick={(e) => { e.stopPropagation(); setView('timer'); }}
                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                       view === 'timer' 
-                        ? 'bg-white shadow-sm text-orange-600' 
+                        ? 'bg-white text-orange-600' 
                         : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200/50'
                     }`}
                   >
@@ -202,7 +211,7 @@ export default function App() {
                     onClick={(e) => { e.stopPropagation(); setView('history'); }}
                     className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
                       view === 'history' 
-                        ? 'bg-white shadow-sm text-orange-600' 
+                        ? 'bg-white text-orange-600' 
                         : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200/50'
                     }`}
                   >
@@ -238,7 +247,7 @@ export default function App() {
                         initial={{ opacity: 0, y: -20, x: '-50%' }}
                         animate={{ opacity: 1, y: 0, x: '-50%' }}
                         exit={{ opacity: 0, y: -20, x: '-50%' }}
-                        className="absolute top-0 left-1/2 z-50 bg-zinc-900 text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg"
+                        className="absolute top-0 left-1/2 z-50 bg-zinc-900 text-white text-xs font-medium px-4 py-2 rounded-full"
                       >
                         {toast}
                       </motion.div>
@@ -288,7 +297,7 @@ export default function App() {
                     <button
                       onClick={handleToggle}
                       style={{ WebkitAppRegion: 'no-drag' } as any}
-                      className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all transform active:scale-95 ${
+                      className={`w-16 h-16 rounded-full flex items-center justify-center transition-all transform active:scale-95 ${
                         isActive ? 'bg-zinc-900 text-white' : 'bg-orange-500 text-white'
                       }`}
                     >
@@ -306,17 +315,17 @@ export default function App() {
                   className="flex-1 flex flex-col p-6 overflow-hidden"
                 >
                   {/* Date Navigation */}
-                  <div className="flex items-center justify-between mb-6 bg-zinc-50 p-2 rounded-2xl border border-black/5" style={{ WebkitAppRegion: 'no-drag' } as any}>
+                  <div className="flex items-center justify-between mb-6 bg-zinc-50 p-2 rounded-2xl border border-black/10" style={{ WebkitAppRegion: 'no-drag' } as any}>
                     <button 
                       onClick={handlePrevDay}
-                      className="p-2 hover:bg-white hover:shadow-sm rounded-xl text-zinc-500 transition-all"
+                      className="p-2 hover:bg-white rounded-xl text-zinc-500 transition-all"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                     
                     <div 
                       onClick={() => setShowDatePicker(!showDatePicker)}
-                      className="flex items-center gap-2 text-zinc-800 font-bold text-sm cursor-pointer hover:text-orange-500 transition-colors px-3 py-1 rounded-lg hover:bg-white hover:shadow-sm"
+                      className="flex items-center gap-2 text-zinc-800 font-bold text-sm cursor-pointer hover:text-orange-500 transition-colors px-3 py-1 rounded-lg hover:bg-white"
                     >
                       <Calendar className="w-4 h-4 text-orange-500" />
                       <span>{selectedDate === new Date().toISOString().split('T')[0] ? '今天' : selectedDate}</span>
@@ -325,7 +334,7 @@ export default function App() {
                     <button 
                       onClick={handleNextDay}
                       disabled={selectedDate === new Date().toISOString().split('T')[0]}
-                      className={`p-2 rounded-xl transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'text-zinc-200 cursor-not-allowed' : 'hover:bg-white hover:shadow-sm text-zinc-500'}`}
+                      className={`p-2 rounded-xl transition-all ${selectedDate === new Date().toISOString().split('T')[0] ? 'text-zinc-200 cursor-not-allowed' : 'hover:bg-white text-zinc-500'}`}
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -339,7 +348,7 @@ export default function App() {
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
-                          className="absolute inset-x-0 top-0 z-50 bg-white border border-black/5 rounded-2xl shadow-xl p-4 mb-4"
+                          className="absolute inset-x-0 top-0 z-50 bg-white border border-black/10 rounded-2xl p-4 mb-4"
                         >
                           <div className="flex items-center justify-between mb-4 px-2">
                             <span className="text-sm font-bold text-zinc-800">
@@ -387,7 +396,7 @@ export default function App() {
                                   onClick={() => handleDateSelect(dateStr)}
                                   className={`
                                     aspect-square flex items-center justify-center text-xs rounded-lg transition-all
-                                    ${isSelected ? 'bg-orange-500 text-white font-bold shadow-md' : 'hover:bg-zinc-100 text-zinc-700'}
+                                    ${isSelected ? 'bg-orange-500 text-white font-bold' : 'hover:bg-zinc-100 text-zinc-700'}
                                     ${isToday && !isSelected ? 'text-orange-500 font-bold' : ''}
                                     ${isFuture ? 'opacity-20 cursor-not-allowed' : ''}
                                   `}
@@ -444,7 +453,7 @@ export default function App() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             style={{ WebkitAppRegion: 'drag' } as any}
-            className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden cursor-default"
+            className="group flex items-center bg-white rounded-2xl border border-black/10 transition-all overflow-hidden cursor-default w-[220px] h-[60px]"
           >
             {/* 迷你模式：点击展开区域改为特定的图标按钮，防止拖动时误触发变大 */}
             <div 

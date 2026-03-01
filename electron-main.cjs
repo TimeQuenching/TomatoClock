@@ -8,32 +8,25 @@ let win;
 function createWindow() {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
 
-  const winWidth = 650;
-  const winHeight = 650;
+  const winWidth = 500;
+  const winHeight = 500;
 
   win = new BrowserWindow({
     width: winWidth,
     height: winHeight,
-    x: screenWidth - winWidth - 20,
-    y: screenHeight - winHeight - 20,
+    x: screenWidth - winWidth - 40,
+    y: screenHeight - winHeight - 40,
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
     alwaysOnTop: true,
     resizable: false,
     show: true,
-    hasShadow: false, // 禁用原生阴影，防止坐标计算偏移
+    hasShadow: false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
     },
-  });
-
-  // 核心修复：鼠标穿透逻辑
-  // 当鼠标在透明区域时，允许点击穿透到下层窗口
-  ipcMain.on('set-ignore-mouse-events', (event, ignore, options) => {
-    const win = BrowserWindow.fromWebContents(event.sender);
-    if (win) win.setIgnoreMouseEvents(ignore, options);
   });
 
   const isDev = process.env.NODE_ENV === 'development';
@@ -68,29 +61,27 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   win.hide();
 
   if (isMini) {
-    // 迷你模式：UI 约 240x70，窗口 320x150
-    const winW = 320; 
-    const winH = 150;
+    // 迷你模式：严格按照 UI 尺寸设置窗口 (220x60)
+    const winW = 220; 
+    const winH = 60;
     win.setResizable(true);
     win.setSize(winW, winH);
     win.setResizable(false);
     
-    // 核心修复：确保 UI 实体向左挪动半个面板宽度，且不跨屏
-    // 计算逻辑：屏幕起点 + 屏幕宽度 - 窗口宽度 - (半个面板宽120 + 边距20) + 窗口内补白40
-    const x = dX + dW - winW - 100; 
-    const y = dY + dH - winH - 10;
+    // 停靠在当前屏幕右下角，留出 20px 边距
+    const x = dX + dW - winW - 20; 
+    const y = dY + dH - winH - 20; 
     win.setPosition(x, y);
   } else {
-    // 展开模式：UI 500x500，窗口 600x600
-    const winW = 600;
-    const winH = 600;
+    // 展开模式：严格按照 UI 尺寸设置窗口 (500x500)
+    const winW = 500;
+    const winH = 500;
     win.setResizable(true);
     win.setSize(winW, winH);
     win.setResizable(false);
     
-    // 展开模式也向左挪动，确保不跨屏
-    const x = dX + dW - winW - 50;
-    const y = dY + dH - winH - 20;
+    const x = dX + dW - winW - 40;
+    const y = dY + dH - winH - 40;
     win.setPosition(x, y);
   }
 
