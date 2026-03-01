@@ -21,6 +21,7 @@ export default function App() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -70,6 +71,32 @@ export default function App() {
     if (selectedDate === today) return;
     d.setDate(d.getDate() + 1);
     setSelectedDate(d.toISOString().split('T')[0]);
+  };
+
+  const handleDateSelect = (date: string) => {
+    setSelectedDate(date);
+    setShowDatePicker(false);
+  };
+
+  // 获取日历数据
+  const getCalendarDays = () => {
+    const date = new Date(selectedDate);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    const days = [];
+    // 填充上个月的空白
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push(null);
+    }
+    // 填充本月日期
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i).toISOString().split('T')[0]);
+    }
+    return days;
   };
 
   useEffect(() => {
@@ -127,17 +154,32 @@ export default function App() {
 
   const progress = ((POMODORO_TIME - timeLeft) / POMODORO_TIME) * 100;
 
-  // 彻底移除 JS 拖拽和鼠标穿透逻辑，回归原生 CSS 拖拽
+  // 智能点击穿透：解决“缓冲区挡住下方应用”的问题
   useEffect(() => {
+    if (window.require) {
+      const { ipcRenderer } = window.require('electron');
+      // 初始状态：开启穿透（因为窗口比 UI 大）
+      ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
+    }
+  }, []);
+
+  const handleMouseEnter = () => {
     if (window.require) {
       const { ipcRenderer } = window.require('electron');
       ipcRenderer.send('set-ignore-mouse-events', false);
     }
-  }, []);
+  };
+
+  const handleMouseLeave = () => {
+    if (window.require) {
+      const { ipcRenderer } = window.require('electron');
+      ipcRenderer.send('set-ignore-mouse-events', true, { forward: true });
+    }
+  };
 
   return (
     <div 
-      className={`h-full w-full bg-transparent flex font-sans select-none overflow-hidden items-center justify-center`}
+      className={`h-full w-full bg-transparent flex font-sans select-none items-center justify-center`}
     >
       <AnimatePresence mode="wait">
         {isExpanded ? (
@@ -147,6 +189,8 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             style={{ WebkitAppRegion: 'drag' } as any}
             className="w-[500px] h-[500px] bg-white rounded-[32px] shadow-2xl shadow-black/20 overflow-hidden flex flex-col border border-black/5 relative cursor-default"
           >
@@ -287,7 +331,10 @@ export default function App() {
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                     
-                    <div className="flex items-center gap-2 text-zinc-800 font-bold text-sm">
+                    <div 
+                      onClick={() => setShowDatePicker(!showDatePicker)}
+                      className="flex items-center gap-2 text-zinc-800 font-bold text-sm cursor-pointer hover:text-orange-500 transition-colors px-3 py-1 rounded-lg hover:bg-white hover:shadow-sm"
+                    >
                       <Calendar className="w-4 h-4 text-orange-500" />
                       <span>{selectedDate === new Date().toISOString().split('T')[0] ? '今天' : selectedDate}</span>
                     </div>
@@ -301,7 +348,82 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto space-y-2 pr-2" style={{ WebkitAppRegion: 'no-drag' } as any}>
+                  <div className="flex-1 overflow-y-auto space-y-2 pr-2 relative" style={{ WebkitAppRegion: 'no-drag' } as any}>
+                    {/* Date Picker Overlay */}
+                    <AnimatePresence>
+                      {showDatePicker && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="absolute inset-x-0 top-0 z-50 bg-white border border-black/5 rounded-2xl shadow-xl p-4 mb-4"
+                        >
+                          <div className="flex items-center justify-between mb-4 px-2">
+                            <span className="text-sm font-bold text-zinc-800">
+                              {new Date(selectedDate).toLocaleString('zh-CN', { year: 'numeric', month: 'long' })}
+                            </span>
+                            <div className="flex gap-1">
+                              <button 
+                                onClick={() => {
+                                  const d = new Date(selectedDate);
+                                  d.setMonth(d.getMonth() - 1);
+                                  setSelectedDate(d.toISOString().split('T')[0]);
+                                }}
+                                className="p-1 hover:bg-zinc-100 rounded-md transition-colors"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  const d = new Date(selectedDate);
+                                  d.setMonth(d.getMonth() + 1);
+                                  setSelectedDate(d.toISOString().split('T')[0]);
+                                }}
+                                className="p-1 hover:bg-zinc-100 rounded-md transition-colors"
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                            {['日', '一', '二', '三', '四', '五', '六'].map(d => (
+                              <span key={d} className="text-[10px] font-bold text-zinc-400">{d}</span>
+                            ))}
+                          </div>
+                          <div className="grid grid-cols-7 gap-1">
+                            {getCalendarDays().map((dateStr, i) => {
+                              if (!dateStr) return <div key={`empty-${i}`} />;
+                              const isSelected = dateStr === selectedDate;
+                              const isToday = dateStr === new Date().toISOString().split('T')[0];
+                              const isFuture = dateStr > new Date().toISOString().split('T')[0];
+                              
+                              return (
+                                <button
+                                  key={dateStr}
+                                  disabled={isFuture}
+                                  onClick={() => handleDateSelect(dateStr)}
+                                  className={`
+                                    aspect-square flex items-center justify-center text-xs rounded-lg transition-all
+                                    ${isSelected ? 'bg-orange-500 text-white font-bold shadow-md' : 'hover:bg-zinc-100 text-zinc-700'}
+                                    ${isToday && !isSelected ? 'text-orange-500 font-bold' : ''}
+                                    ${isFuture ? 'opacity-20 cursor-not-allowed' : ''}
+                                  `}
+                                >
+                                  {new Date(dateStr).getDate()}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <button 
+                            onClick={() => setShowDatePicker(false)}
+                            className="w-full mt-4 py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-zinc-600 transition-colors"
+                          >
+                            关闭
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     {sessions.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full text-zinc-300 space-y-3">
                         <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center border border-dashed border-zinc-200">
@@ -338,6 +460,8 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
             style={{ WebkitAppRegion: 'drag' } as any}
             className="group flex items-center bg-white rounded-2xl shadow-xl border border-black/5 hover:shadow-2xl transition-all overflow-hidden cursor-default"
           >

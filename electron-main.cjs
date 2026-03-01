@@ -68,24 +68,23 @@ ipcMain.on('toggle-mini', (event, isMini) => {
   win.hide();
 
   if (isMini) {
-    // 迷你模式：窗口尺寸与 UI 严格一致
-    const miniW = 240; 
-    const miniH = 70;
+    // 迷你模式：增加缓冲区给阴影空间 (UI 约 240x70)
+    const winW = 320; 
+    const winH = 150;
     win.setResizable(true);
-    win.setSize(miniW, miniH);
+    win.setSize(winW, winH);
     win.setResizable(false);
-    // 停靠在当前屏幕右下角，增加右边距防止跨屏（向左挪动半个面板宽度 + 基础边距）
-    const rightMargin = (miniW / 2) + 20;
-    win.setPosition(dX + dW - miniW - rightMargin, dY + dH - miniH - 20);
+    // 补偿缓冲区，确保视觉上的右下角位置不变
+    win.setPosition(dX + dW - winW + 20, dY + dH - winH + 20);
   } else {
-    // 展开模式
-    const expW = 500;
-    const expH = 500;
+    // 展开模式：增加缓冲区 (UI 500x500)
+    const winW = 600;
+    const winH = 600;
     win.setResizable(true);
-    win.setSize(expW, expH);
+    win.setSize(winW, winH);
     win.setResizable(false);
-    // 展开模式也适当增加边距
-    win.setPosition(dX + dW - expW - 60, dY + dH - expH - 40);
+    // 补偿缓冲区
+    win.setPosition(dX + dW - winW + 20, dY + dH - winH + 20);
   }
 
   // 彻底禁用鼠标穿透，因为窗口现在和内容一样大，不会误挡
